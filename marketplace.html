@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#050505">
+  <title>Marketplace — AXION Open-Source Software | Meka Develops</title>
+  <meta name="description" content="Download verified open-source tools directly for Windows, macOS, and Linux with live latest versions and creator GitHub links.">
+
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23050505'/%3E%3Crect x='14' y='22' width='36' height='20' rx='10' fill='%23ffffff'/%3E%3Crect x='18' y='26' width='28' height='12' rx='6' fill='%23050505'/%3E%3Ccircle cx='26' cy='32' r='2.5' fill='%23ffffff'/%3E%3Ccircle cx='38' cy='32' r='2.5' fill='%23ffffff'/%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div class="grain-overlay" aria-hidden="true"></div>
+
+  <div class="cursor-dot" id="cursor-dot" aria-hidden="true"></div>
+  <div class="cursor-ring" id="cursor-ring" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="brand" data-cursor="link">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span>AXION</span>
+        <span class="brand-sub">BY MEKA DEVELOPS</span>
+      </a>
+
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a href="index.html" class="nav-link" data-cursor="link">Overview</a>
+        <a href="marketplace.html" class="nav-link is-active" data-cursor="link">Marketplace</a>
+        <a href="terms.html" class="nav-link" data-cursor="link">Terms &amp; Policy</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <section class="page-hero">
+      <div class="container">
+        <p class="eyebrow hero-animate">AXION DIRECTORY • OPEN-SOURCE SOFTWARE</p>
+        <h1 class="page-hero-title hero-animate">Verified Tools.<br>Direct Installers.</h1>
+        <p class="hero-subtitle hero-animate">
+          Every tool below is 100% open source. Downloads fetch the latest official binary for your operating system, and every card links directly to its creator's GitHub repository.
+        </p>
+
+        <!-- Automatic OS Detector & Platform Switcher -->
+        <div class="os-banner hero-animate">
+          <div class="os-detected">
+            <span class="os-dot" aria-hidden="true"></span>
+            <span>DETECTED OS: <strong id="detected-os-name">Windows</strong></span>
+          </div>
+
+          <div class="os-switcher" role="group" aria-label="Choose target operating system">
+            <button type="button" class="os-btn" data-os="windows" data-cursor="button">Windows</button>
+            <button type="button" class="os-btn" data-os="mac" data-cursor="button">macOS</button>
+            <button type="button" class="os-btn" data-os="linux" data-cursor="button">Linux</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <!-- Category Filters & Search -->
+        <div class="marketplace-controls">
+          <div class="category-tabs" role="group" aria-label="Filter software by category">
+            <button type="button" class="cat-tab is-active" data-category="all" data-cursor="button">All Tools</button>
+            <button type="button" class="cat-tab" data-category="ai" data-cursor="button">Local AI</button>
+            <button type="button" class="cat-tab" data-category="media" data-cursor="button">3D &amp; Media</button>
+            <button type="button" class="cat-tab" data-category="utils" data-cursor="button">Utilities</button>
+          </div>
+
+          <div class="search-wrap">
+            <input
+              type="search"
+              id="tool-search"
+              class="search-input"
+              placeholder="Search tool or creator..."
+              aria-label="Search open-source tools"
+            >
+          </div>
+        </div>
+
+        <!-- Open-Source Tool Cards Grid -->
+        <div class="tools-grid">
+          <!-- 1. Ollama -->
+          <article class="tool-card reveal" data-tool-id="ollama" data-category="ai">
+            <div class="tool-top">
+              <span class="tool-category">Local AI</span>
+              <span class="version-badge">v0.40.17</span>
+            </div>
+            <h2 class="tool-name">Ollama</h2>
+            <p class="tool-creator">Created by Ollama Contributors</p>
+            <p class="tool-desc">
+              Run Llama, Qwen, DeepSeek, and Gemma locally on your own computer with full privacy and zero cloud fees.
+            </p>
+            <div class="tool-meta-row">
+              <span>MIT License</span>
+              <span class="tool-os-target">Windows Installer</span>
+            </div>
+            <div class="tool-actions">
+              <a href="https://ollama.com/download/OllamaSetup.exe" class="tool-download-btn" data-cursor="button">
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M8 2.5V10.5M8 10.5L11.5 7M8 10.5L4.5 7M3 13.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="dl-label">Download .exe</span>
+              </a>
+              <a href="https://github.com/ollama/ollama" target="_blank" rel="noopener noreferrer" class="tool-github-btn" aria-label="View Ollama on GitHub" title="View source on GitHub" data-cursor="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+                </svg>
+              </a>
+            </div>
+          </article>
+
+          <!-- 2. Jan -->
+          <article class="tool-card reveal" data-tool-id="jan" data-category="ai">
+            <div class="tool-top">
+              <span class="tool-category">Local AI</span>
+              <span class="version-badge">v0.8.8</span>
+            </div>
+            <h2 class="tool-name">Jan</h2>
+            <p class="tool-creator">Created by Menlo Research</p>
+            <p class="tool-desc">
+              A clean offline ChatGPT alternative that runs open-source AI models directly on your desktop hardware.
+            </p>
+            <div class="tool-meta-row">
+              <span>Apache-2.0 License</span>
+              <span class="tool-os-target">Windows Installer</span>
+            </div>
+            <div class="tool-actions">
+              <a href="https://github.com/janhq/jan/releases/latest" class="tool-download-btn" data-cursor="button">
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M8 2.5V10.5M8 10.5L11.5 7M8 10.5L4.5 7M3 13.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="dl-label">Download .exe</span>
+              </a>
+              <a href="https://github.com/janhq/jan" target="_blank" rel="noopener noreferrer" class="tool-github-btn" aria-label="View Jan on GitHub" title="View source on GitHub" data-cursor="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+                </svg>
+              </a>
+            </div>
+          </article>
+
+          <!-- 3. Godot Engine -->
+          <article class="tool-card reveal" data-tool-id="godot" data-category="media">
+            <div class="tool-top">
+              <span class="tool-category">3D &amp; Media</span>
+              <span class="version-badge">4.7.2-stable</span>
+            </div>
+            <h2 class="tool-name">Godot Engine</h2>
+            <p class="tool-creator">Created by Godot Contributors</p>
+            <p class="tool-desc">
+              Lightweight, zero-royalty 2D and 3D real-time engine for interactive apps, games, and simulations.
+            </p>
+            <div class="tool-meta-row">
+              <span>MIT License</span>
+              <span class="tool-os-target">Windows Installer</span>
+            </div>
+            <div class="tool-actions">
+              <a href="https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_win64.exe.zip" class="tool-download-btn" data-cursor="button">
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M8 2.5V10.5M8 10.5L11.5 7M8 10.5L4.5 7M3 13.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="dl-label">Download .zip</span>
+              </a>
+              <a href="https://github.com/godotengine/godot" target="_blank" rel="noopener noreferrer" class="tool-github-btn" aria-label="View Godot Engine on GitHub" title="View source on GitHub" data-cursor="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+                </svg>
+              </a>
+            </div>
+          </article>
+
+          <!-- 4. OBS Studio -->
+          <article class="tool-card reveal" data-tool-id="obs" data-category="media">
+            <div class="tool-top">
+              <span class="tool-category">3D &amp; Media</span>
+              <span class="version-badge">33.0.1</span>
+            </div>
+            <h2 class="tool-name">OBS Studio</h2>
+            <p class="tool-creator">Created by OBS Project</p>
+            <p class="tool-desc">
+              Industry-standard open-source tool for high-FPS screen capture, video recording, and live broadcasting.
+            </p>
+            <div class="tool-meta-row">
+              <span>GPL-2.0 License</span>
+              <span class="tool-os-target">Windows Installer</span>
+            </div>
+            <div class="tool-actions">
+              <a href="https://github.com/obsproject/obs-studio/releases/download/33.0.1/OBS-Studio-33.0.1-Windows-x64-Installer.exe" class="tool-download-btn" data-cursor="button">
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M8 2.5V10.5M8 10.5L11.5 7M8 10.5L4.5 7M3 13.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="dl-label">Download .exe</span>
+              </a>
+              <a href="https://github.com/obsproject/obs-studio" target="_blank" rel="noopener noreferrer" class="tool-github-btn" aria-label="View OBS Studio on GitHub" title="View source on GitHub" data-cursor="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+                </svg>
+              </a>
+            </div>
+          </article>
+
+          <!-- 5. Audacity -->
+          <article class="tool-card reveal" data-tool-id="audacity" data-category="media">
+            <div class="tool-top">
+              <span class="tool-category">3D &amp; Media</span>
+              <span class="version-badge">4.0.2</span>
+            </div>
+            <h2 class="tool-name">Audacity</h2>
+            <p class="tool-creator">Created by Audacity Team</p>
+            <p class="tool-desc">
+              Fast, multi-track open-source audio recorder and editor for podcasts, sound effects, and voice cleanup.
+            </p>
+            <div class="tool-meta-row">
+              <span>GPL-2.0+ License</span>
+              <span class="tool-os-target">Windows Installer</span>
+            </div>
+            <div class="tool-actions">
+              <a href="https://github.com/audacity/audacity/releases/latest" class="tool-download-btn" data-cursor="button">
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M8 2.5V10.5M8 10.5L11.5 7M8 10.5L4.5 7M3 13.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="dl-label">Download .exe</span>
+              </a>
+              <a href="https://github.com/audacity/audacity" target="_blank" rel="noopener noreferrer" class="tool-github-btn" aria-label="View Audacity on GitHub" title="View source on GitHub" data-cursor="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+                </svg>
+              </a>
+            </div>
+          </article>
+
+          <!-- 6. LocalSend -->
+          <article class="tool-card reveal" data-tool-id="localsend" data-category="utils">
+            <div class="tool-top">
+              <span class="tool-category">Utilities</span>
+              <span class="version-badge">v1.19.0</span>
+            </div>
+            <h2 class="tool-name">LocalSend</h2>
+            <p class="tool-creator">Created by Tien Do Nam</p>
+            <p class="tool-desc">
+              Encrypted open-source AirDrop alternative to send files quickly over Wi-Fi without an internet connection.
+            </p>
+            <div class="tool-meta-row">
+              <span>Apache-2.0 License</span>
+              <span class="tool-os-target">Windows Installer</span>
+            </div>
+            <div class="tool-actions">
+              <a href="https://github.com/localsend/localsend/releases/latest" class="tool-download-btn" data-cursor="button">
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M8 2.5V10.5M8 10.5L11.5 7M8 10.5L4.5 7M3 13.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="dl-label">Download .exe</span>
+              </a>
+              <a href="https://github.com/localsend/localsend" target="_blank" rel="noopener noreferrer" class="tool-github-btn" aria-label="View LocalSend on GitHub" title="View source on GitHub" data-cursor="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+                </svg>
+              </a>
+            </div>
+          </article>
+        </div>
+
+        <div id="marketplace-empty" class="empty-state" hidden>
+          No matching open-source tools found. Try clearing your search filter.
+        </div>
+
+        <footer class="site-footer">
+          <span>AXION — CREATED INDEPENDENTLY BY MEKA DEVELOPS</span>
+          <div class="footer-links">
+            <a href="index.html" data-cursor="link">Overview</a>
+            <a href="terms.html" data-cursor="link">Terms &amp; Rules</a>
+          </div>
+        </footer>
+      </div>
+    </section>
+  </main>
+
+  <div id="download-toast" class="download-toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
