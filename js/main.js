@@ -1,7 +1,7 @@
 /**
- * UNIT 01 — Application Controller
- * Handles lazy 3D engine initialization, custom cursor, pointer/tilt tracking,
- * first-visit guided tour, scroll choreography, and performance pause states.
+ * AXION by Meka Develops — Shared Application Controller
+ * Powers custom cursor, scroll reveals, homepage 3D category switcher,
+ * first-visit tour, OS detection, live release fetching, and direct downloads.
  */
 
 const rootEl = document.documentElement;
@@ -17,9 +17,7 @@ const canvasContainer = document.getElementById('canvas-container');
 const robotStage = document.getElementById('robot-stage');
 const cursorDot = document.getElementById('cursor-dot');
 const cursorRing = document.getElementById('cursor-ring');
-const heroCta = document.getElementById('hero-cta');
 
-// Guide / Tour Elements
 const guideEl = document.getElementById('sentinel-guide');
 const guideStepLabel = document.getElementById('guide-step-label');
 const guideTitle = document.getElementById('guide-title');
@@ -30,7 +28,7 @@ const guideNextBtn = document.getElementById('guide-next');
 const guideCloseBtn = document.getElementById('guide-close');
 const replayTourBtn = document.getElementById('replay-tour');
 
-const TOUR_STORAGE_KEY = 'unit01_guide_seen';
+const TOUR_STORAGE_KEY = 'axion_guide_seen';
 
 let robotApp = null;
 let isHoveringRobot = false;
@@ -93,7 +91,7 @@ function initCustomCursor() {
       cursorVisible = true;
     }
 
-    const interactiveTarget = e.target.closest('a, button, [data-cursor]');
+    const interactiveTarget = e.target.closest('a, button, input, [data-cursor]');
     cursorRing.classList.toggle('is-hover', Boolean(interactiveTarget));
 
     if (!cursorRaf) {
@@ -113,13 +111,374 @@ function initCustomCursor() {
 }
 
 // =========================================================
-// 2. FIRST-VISIT GREETING & REPLAYABLE GUIDED TOUR
+// 2. HOMEPAGE CATEGORY PREVIEW SWITCHER
+// =========================================================
+const CATEGORY_SPECS = {
+  vision: {
+    title: 'Local AI — Private Models On Your Machine',
+    desc: 'Run open-weight language models locally without cloud subscriptions or tracking. Includes tools like Ollama and Jan with direct Windows, macOS, and Linux installers.',
+    platforms: 'Win / Mac / Linux',
+    license: 'Open Source'
+  },
+  kinetic: {
+    title: '3D & Media — Creative Production Suites',
+    desc: 'Build games, record crisp video, and edit studio-grade audio with community-driven tools like Godot Engine, OBS Studio, and Audacity.',
+    platforms: 'Win / Mac / Linux',
+    license: 'MIT / GPL'
+  },
+  pulse: {
+    title: 'Utilities — Fast Cross-Device Workflows',
+    desc: 'Lightweight everyday essentials like LocalSend for encrypted offline file sharing across all your computers and phones.',
+    platforms: 'Win / Mac / Linux',
+    license: 'Apache 2.0'
+  }
+};
+
+function initModelSwitcher() {
+  const pills = document.querySelectorAll('.model-pill[data-model-mode]');
+  if (!pills.length) return;
+
+  const titleEl = document.getElementById('readout-title');
+  const descEl = document.getElementById('readout-desc');
+  const latencyEl = document.getElementById('readout-latency');
+  const priceEl = document.getElementById('readout-price');
+
+  pills.forEach((pill) => {
+    pill.addEventListener('click', () => {
+      const mode = pill.dataset.modelMode;
+      const spec = CATEGORY_SPECS[mode];
+      if (!spec) return;
+
+      pills.forEach((p) => {
+        const active = p === pill;
+        p.classList.toggle('is-active', active);
+        p.setAttribute('aria-selected', String(active));
+      });
+
+      if (titleEl) titleEl.textContent = spec.title;
+      if (descEl) descEl.textContent = spec.desc;
+      if (latencyEl) latencyEl.textContent = spec.platforms;
+      if (priceEl) priceEl.textContent = spec.license;
+
+      if (robotApp) {
+        robotApp.setModelMode(mode);
+      }
+    });
+  });
+}
+
+// =========================================================
+// 3. OPEN-SOURCE MARKETPLACE: OS DETECTION & DIRECT DOWNLOADS
+// =========================================================
+const TOOLS_CATALOG = {
+  ollama: {
+    name: 'Ollama',
+    repo: 'ollama/ollama',
+    defaultVersion: 'v0.40.17',
+    ext: { windows: '.exe', mac: '.zip', linux: '.tgz' },
+    fallbackUrls: {
+      windows: 'https://ollama.com/download/OllamaSetup.exe',
+      mac: 'https://ollama.com/download/Ollama-darwin.zip',
+      linux: 'https://github.com/ollama/ollama/releases/download/v0.40.17/ollama-linux-amd64.tgz'
+    }
+  },
+  jan: {
+    name: 'Jan',
+    repo: 'janhq/jan',
+    defaultVersion: 'v0.8.8',
+    ext: { windows: '.exe', mac: '.dmg', linux: '.AppImage' },
+    fallbackUrls: {
+      windows: 'https://github.com/janhq/jan/releases/latest',
+      mac: 'https://github.com/janhq/jan/releases/latest',
+      linux: 'https://github.com/janhq/jan/releases/latest'
+    }
+  },
+  godot: {
+    name: 'Godot Engine',
+    repo: 'godotengine/godot',
+    defaultVersion: '4.7.2-stable',
+    ext: { windows: '.zip', mac: '.zip', linux: '.zip' },
+    fallbackUrls: {
+      windows: 'https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_win64.exe.zip',
+      mac: 'https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_macos.universal.zip',
+      linux: 'https://github.com/godotengine/godot/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip'
+    }
+  },
+  obs: {
+    name: 'OBS Studio',
+    repo: 'obsproject/obs-studio',
+    defaultVersion: '33.0.1',
+    ext: { windows: '.exe', mac: '.dmg', linux: '.deb' },
+    fallbackUrls: {
+      windows: 'https://github.com/obsproject/obs-studio/releases/download/33.0.1/OBS-Studio-33.0.1-Windows-x64-Installer.exe',
+      mac: 'https://github.com/obsproject/obs-studio/releases/download/33.0.1/OBS-Studio-33.0.1-macOS-Apple.dmg',
+      linux: 'https://github.com/obsproject/obs-studio/releases/download/33.0.1/OBS-Studio-33.0.1-Ubuntu-x86_64.deb'
+    }
+  },
+  audacity: {
+    name: 'Audacity',
+    repo: 'audacity/audacity',
+    defaultVersion: '4.0.2',
+    ext: { windows: '.exe', mac: '.dmg', linux: '.AppImage' },
+    fallbackUrls: {
+      windows: 'https://github.com/audacity/audacity/releases/latest',
+      mac: 'https://github.com/audacity/audacity/releases/latest',
+      linux: 'https://github.com/audacity/audacity/releases/download/Audacity-4.0.2/audacity-linux-4.0.2-x86_64.AppImage'
+    }
+  },
+  localsend: {
+    name: 'LocalSend',
+    repo: 'localsend/localsend',
+    defaultVersion: 'v1.19.0',
+    ext: { windows: '.exe', mac: '.dmg', linux: '.AppImage' },
+    fallbackUrls: {
+      windows: 'https://github.com/localsend/localsend/releases/latest',
+      mac: 'https://github.com/localsend/localsend/releases/latest',
+      linux: 'https://github.com/localsend/localsend/releases/latest'
+    }
+  }
+};
+
+function detectUserOS() {
+  const platform = (navigator.userAgentData?.platform || navigator.platform || '').toLowerCase();
+  const ua = (navigator.userAgent || '').toLowerCase();
+  if (platform.includes('mac') || ua.includes('mac os')) return 'mac';
+  if (platform.includes('linux') || ua.includes('linux')) return 'linux';
+  return 'windows';
+}
+
+function getOSDisplayName(os) {
+  if (os === 'mac') return 'macOS';
+  if (os === 'linux') return 'Linux';
+  return 'Windows';
+}
+
+function pickBestAssetUrl(assets, os) {
+  if (!Array.isArray(assets) || !assets.length) return null;
+
+  const valid = assets.filter((a) => {
+    const n = a.name.toLowerCase();
+    return !/\.(sha256|sha512|sig|asc|blockmap|yml|yaml|txt|zsync)$/i.test(n) && !n.includes('source');
+  });
+
+  if (os === 'windows') {
+    const exe = valid.find((a) => /\.exe$/i.test(a.name) && !/arm64/i.test(a.name));
+    if (exe) return exe.browser_download_url;
+    const msi = valid.find((a) => /\.msi$/i.test(a.name) && !/arm64/i.test(a.name));
+    if (msi) return msi.browser_download_url;
+    const winZip = valid.find((a) => /win64.*exe\.zip$/i.test(a.name) && !/mono/i.test(a.name))
+      || valid.find((a) => /(win64|windows).*\.zip$/i.test(a.name) && !/arm64|mono/i.test(a.name));
+    if (winZip) return winZip.browser_download_url;
+  }
+
+  if (os === 'mac') {
+    const dmg = valid.find((a) => /\.dmg$/i.test(a.name) && /(universal|apple|arm64)/i.test(a.name))
+      || valid.find((a) => /\.dmg$/i.test(a.name));
+    if (dmg) return dmg.browser_download_url;
+    const macZip = valid.find((a) => /(macos|darwin).*\.zip$/i.test(a.name) && !/mono/i.test(a.name));
+    if (macZip) return macZip.browser_download_url;
+  }
+
+  if (os === 'linux') {
+    const appImage = valid.find((a) => /\.appimage$/i.test(a.name) && !/arm64|aarch64/i.test(a.name));
+    if (appImage) return appImage.browser_download_url;
+    const deb = valid.find((a) => /\.deb$/i.test(a.name) && !/arm64|aarch64/i.test(a.name));
+    if (deb) return deb.browser_download_url;
+    const linuxArchive = valid.find((a) => /linux.*(amd64|x86_64).*\.(tgz|tar\.gz|zip)$/i.test(a.name) && !/mono/i.test(a.name));
+    if (linuxArchive) return linuxArchive.browser_download_url;
+  }
+
+  return null;
+}
+
+async function fetchLatestRelease(repo) {
+  const cacheKey = `axion_rel_${repo}`;
+  try {
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Date.now() - parsed.ts < 30 * 60 * 1000) {
+        return parsed.data;
+      }
+    }
+  } catch {
+    // Ignore cache read issues
+  }
+
+  const res = await fetch(`https://api.github.com/repos/${repo}/releases/latest`, {
+    headers: { Accept: 'application/vnd.github+json' }
+  });
+  if (!res.ok) throw new Error('Release fetch skipped');
+  const data = await res.json();
+
+  const slim = {
+    tag: data.tag_name,
+    urls: {
+      windows: pickBestAssetUrl(data.assets, 'windows'),
+      mac: pickBestAssetUrl(data.assets, 'mac'),
+      linux: pickBestAssetUrl(data.assets, 'linux')
+    }
+  };
+
+  try {
+    sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: slim }));
+  } catch {
+    // Ignore storage quota errors
+  }
+
+  return slim;
+}
+
+function initMarketplace() {
+  const cards = document.querySelectorAll('.tool-card[data-tool-id]');
+  if (!cards.length) return;
+
+  const detectedOsLabel = document.getElementById('detected-os-name');
+  const osBtns = document.querySelectorAll('.os-btn[data-os]');
+  const catTabs = document.querySelectorAll('.cat-tab[data-category]');
+  const searchInput = document.getElementById('tool-search');
+  const emptyState = document.getElementById('marketplace-empty');
+  const toastEl = document.getElementById('download-toast');
+
+  const detectedOS = detectUserOS();
+  let selectedOS = detectedOS;
+  let activeCategory = 'all';
+  let searchQuery = '';
+  let toastTimer = 0;
+
+  if (detectedOsLabel) {
+    detectedOsLabel.textContent = getOSDisplayName(detectedOS);
+  }
+
+  const liveReleases = {};
+
+  const showToast = (message) => {
+    if (!toastEl) return;
+    clearTimeout(toastTimer);
+    toastEl.textContent = message;
+    toastEl.classList.add('is-visible');
+    toastTimer = setTimeout(() => {
+      toastEl.classList.remove('is-visible');
+    }, 3600);
+  };
+
+  const refreshCardUI = () => {
+    const osName = getOSDisplayName(selectedOS);
+    cards.forEach((card) => {
+      const id = card.dataset.toolId;
+      const meta = TOOLS_CATALOG[id];
+      if (!meta) return;
+
+      const live = liveReleases[id];
+      const version = live?.tag || meta.defaultVersion;
+      const versionEl = card.querySelector('.version-badge');
+      const osTargetEl = card.querySelector('.tool-os-target');
+      const downloadBtn = card.querySelector('.tool-download-btn');
+
+      if (versionEl) versionEl.textContent = version;
+      if (osTargetEl) osTargetEl.textContent = `${osName} Installer`;
+
+      if (downloadBtn) {
+        const extLabel = meta.ext[selectedOS] || '';
+        const btnLabel = downloadBtn.querySelector('.dl-label');
+        if (btnLabel) {
+          btnLabel.textContent = `Download ${extLabel}`;
+        }
+        const directUrl = live?.urls?.[selectedOS] || meta.fallbackUrls[selectedOS];
+        downloadBtn.href = directUrl;
+      }
+    });
+  };
+
+  const applyFilters = () => {
+    let visibleCount = 0;
+    const query = searchQuery.trim().toLowerCase();
+
+    cards.forEach((card) => {
+      const category = card.dataset.category || '';
+      const text = card.textContent.toLowerCase();
+      const matchesCat = activeCategory === 'all' || category === activeCategory;
+      const matchesSearch = !query || text.includes(query);
+      const show = matchesCat && matchesSearch;
+      card.hidden = !show;
+      if (show) visibleCount++;
+    });
+
+    if (emptyState) emptyState.hidden = visibleCount > 0;
+  };
+
+  const setActiveOS = (os) => {
+    selectedOS = os;
+    osBtns.forEach((btn) => btn.classList.toggle('is-active', btn.dataset.os === os));
+    refreshCardUI();
+  };
+
+  osBtns.forEach((btn) => {
+    btn.addEventListener('click', () => setActiveOS(btn.dataset.os));
+  });
+
+  catTabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      activeCategory = tab.dataset.category;
+      catTabs.forEach((t) => t.classList.toggle('is-active', t === tab));
+      applyFilters();
+    });
+  });
+
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      applyFilters();
+    });
+  }
+
+  // Trigger clean direct file downloads without leaving the marketplace
+  cards.forEach((card) => {
+    const id = card.dataset.toolId;
+    const downloadBtn = card.querySelector('.tool-download-btn');
+    if (!downloadBtn) return;
+
+    downloadBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const meta = TOOLS_CATALOG[id];
+      const live = liveReleases[id];
+      const url = live?.urls?.[selectedOS] || meta.fallbackUrls[selectedOS];
+      const version = live?.tag || meta.defaultVersion;
+
+      showToast(`Starting ${meta.name} (${version}) download for ${getOSDisplayName(selectedOS)}...`);
+
+      const tempLink = document.createElement('a');
+      tempLink.href = url;
+      tempLink.setAttribute('download', '');
+      tempLink.rel = 'noopener noreferrer';
+      document.body.appendChild(tempLink);
+      tempLink.click();
+      tempLink.remove();
+    });
+  });
+
+  // Initialize UI immediately with detected OS, then sync live GitHub versions silently
+  setActiveOS(detectedOS);
+
+  Object.entries(TOOLS_CATALOG).forEach(async ([id, meta]) => {
+    try {
+      const release = await fetchLatestRelease(meta.repo);
+      liveReleases[id] = release;
+      refreshCardUI();
+    } catch {
+      // Fallback versions and direct links remain active seamlessly
+    }
+  });
+}
+
+// =========================================================
+// 4. FIRST-VISIT GREETING & REPLAYABLE GUIDED TOUR
 // =========================================================
 const tourSteps = [
   {
-    badge: 'UNIT 01 // ONLINE',
-    title: "Hello. I'm Unit 01.",
-    text: "Welcome to my space. Want a quick guided tour of how I'm built and how this site works?",
+    badge: 'AXION // ONLINE',
+    title: 'Welcome to AXION.',
+    text: 'Built independently by Meka Develops. Want a quick tour of our open-source software marketplace?',
     skipLabel: 'Dismiss',
     nextLabel: 'Show Me Around',
     targetId: 'hero',
@@ -127,9 +486,9 @@ const tourSteps = [
     action: () => {}
   },
   {
-    badge: '01 / 03 — SENTINEL CORE',
-    title: 'Pure Math. Zero 3D Files.',
-    text: 'Every curve, visor reflection, and floating arm is built live with Three.js primitives. Double-click me to spin!',
+    badge: '01 / 03 — DIRECT ACCESS',
+    title: 'Latest Releases. Zero Detours.',
+    text: 'Every Download button detects your OS and grabs the newest official installer directly—while keeping a dedicated GitHub button for source code.',
     skipLabel: 'Skip Tour',
     nextLabel: 'Next →',
     targetId: 'hero',
@@ -139,25 +498,30 @@ const tourSteps = [
     }
   },
   {
-    badge: '02 / 03 — STUDIO LIGHT',
-    title: 'Procedural Reflections.',
-    text: 'Watch me glide across the stage. A custom studio light box runs in memory so ceramic and glass stay glossy.',
+    badge: '02 / 03 — CATEGORIES',
+    title: 'AI, 3D & Everyday Utilities.',
+    text: 'Preview software categories here, then open the Marketplace page to filter, search, and download for Windows, macOS, or Linux.',
     skipLabel: 'Skip Tour',
     nextLabel: 'Next →',
-    targetId: 'about',
+    targetId: 'preview',
     section: 'about',
-    action: () => {}
+    action: () => {
+      if (robotApp) robotApp.setModelMode('pulse');
+    }
   },
   {
-    badge: '03 / 03 — 60 FPS ENGINE',
-    title: 'Built for Speed.',
-    text: 'Adaptive scaling and pause-on-idle keep frame rates silky on phones and laptops alike. Enjoy exploring!',
+    badge: '03 / 03 — TRANSPARENT RULES',
+    title: 'Independent by Meka Develops.',
+    text: 'Every tool credits its real creator, and our Terms page strictly clarifies our independence. Enjoy exploring!',
     skipLabel: 'Skip Tour',
     nextLabel: 'Finish',
     targetId: 'architecture',
     section: 'architecture',
     action: () => {
-      if (robotApp) robotApp.triggerClickReaction();
+      if (robotApp) {
+        robotApp.setModelMode('vision');
+        robotApp.triggerClickReaction();
+      }
     }
   }
 ];
@@ -252,20 +616,17 @@ function advanceTourStep() {
 }
 
 function initGuideControls() {
-  if (guideNextBtn) {
-    guideNextBtn.addEventListener('click', () => {
-      advanceTourStep();
-    });
-  }
+  if (!guideEl) return;
 
+  if (guideNextBtn) {
+    guideNextBtn.addEventListener('click', () => advanceTourStep());
+  }
   if (guideSkipBtn) {
     guideSkipBtn.addEventListener('click', () => closeGuide(false));
   }
-
   if (guideCloseBtn) {
     guideCloseBtn.addEventListener('click', () => closeGuide(false));
   }
-
   if (replayTourBtn) {
     replayTourBtn.addEventListener('click', () => {
       clearAutoAdvance();
@@ -274,9 +635,7 @@ function initGuideControls() {
         top: 0,
         behavior: reducedMotionQuery.matches ? 'auto' : 'smooth'
       });
-      if (robotApp) {
-        robotApp.replayEntrance();
-      }
+      if (robotApp) robotApp.replayEntrance();
       openGuide(0);
     });
   }
@@ -289,14 +648,14 @@ function initGuideControls() {
   }, { passive: true });
 
   window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && guideEl && guideEl.classList.contains('is-open')) {
+    if (e.key === 'Escape' && guideEl.classList.contains('is-open')) {
       closeGuide(false);
     }
   });
 }
 
 // =========================================================
-// 3. SCROLL REVEAL & SECTION CHOREOGRAPHY
+// 5. SCROLL REVEAL & SECTION CHOREOGRAPHY
 // =========================================================
 function initScrollObservers() {
   const revealEls = document.querySelectorAll('.reveal');
@@ -337,9 +696,11 @@ function initScrollObservers() {
 }
 
 // =========================================================
-// 4. POINTER, TOUCH, TILT & MULTI-REACTION INTERACTIONS
+// 6. POINTER, TOUCH, TILT & MULTI-REACTION INTERACTIONS
 // =========================================================
 function initRobotInteractions() {
+  if (!canvasContainer) return;
+
   window.addEventListener('pointermove', (e) => {
     if (!robotApp) return;
 
@@ -397,12 +758,6 @@ function initRobotInteractions() {
     }
   });
 
-  if (heroCta) {
-    heroCta.addEventListener('click', () => {
-      if (robotApp) robotApp.triggerClickReaction();
-    });
-  }
-
   window.addEventListener('touchmove', (e) => {
     if (!robotApp || !e.touches.length) return;
     const touch = e.touches[0];
@@ -426,9 +781,11 @@ function initRobotInteractions() {
 }
 
 // =========================================================
-// 5. PERFORMANCE LIFECYCLE (TAB VISIBILITY & CLEANUP)
+// 7. PERFORMANCE LIFECYCLE & LAZY 3D BOOTSTRAP
 // =========================================================
 function initLifecycleGuards() {
+  if (!canvasContainer) return;
+
   let isTabHidden = document.hidden;
   let isStageVisible = true;
 
@@ -462,9 +819,6 @@ function initLifecycleGuards() {
   });
 }
 
-// =========================================================
-// 6. LAZY 3D BOOTSTRAP (TEXT PAINTS FIRST, 3D LOADS NEXT)
-// =========================================================
 function showFallback() {
   if (loaderEl) loaderEl.classList.add('is-hidden');
   if (fallbackEl) fallbackEl.hidden = false;
@@ -505,16 +859,20 @@ async function loadRobotEngine() {
   }
 }
 
-// Boot UI immediately so typography & layout respond at 0ms
+// Boot shared UI immediately
 initCustomCursor();
+initModelSwitcher();
+initMarketplace();
 initGuideControls();
 initScrollObservers();
 initRobotInteractions();
 initLifecycleGuards();
 
-// Defer 3D module download slightly so initial text paint stays instant
-if ('requestIdleCallback' in window) {
-  window.requestIdleCallback(() => loadRobotEngine(), { timeout: 250 });
-} else {
-  setTimeout(loadRobotEngine, 80);
+// Only download Three.js on pages with the 3D canvas (index.html)
+if (canvasContainer) {
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(() => loadRobotEngine(), { timeout: 250 });
+  } else {
+    setTimeout(loadRobotEngine, 80);
+  }
 }
