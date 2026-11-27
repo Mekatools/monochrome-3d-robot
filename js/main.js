@@ -1,7 +1,7 @@
 /**
  * UNIT 01 — Application Controller
  * Handles lazy 3D engine initialization, custom cursor, pointer/tilt tracking,
- * curious button reactions, double-tap spin, scroll choreography, and pause states.
+ * shadow-entrance greeting, guided site tour, scroll choreography, and pause states.
  */
 
 const rootEl = document.documentElement;
@@ -18,6 +18,17 @@ const robotStage = document.getElementById('robot-stage');
 const cursorDot = document.getElementById('cursor-dot');
 const cursorRing = document.getElementById('cursor-ring');
 const heroCta = document.getElementById('hero-cta');
+
+// Guide / Tour Elements
+const guideEl = document.getElementById('sentinel-guide');
+const guideStepLabel = document.getElementById('guide-step-label');
+const guideTitle = document.getElementById('guide-title');
+const guideText = document.getElementById('guide-text');
+const guideDots = document.querySelectorAll('#guide-dots .guide-dot');
+const guideSkipBtn = document.getElementById('guide-skip');
+const guideNextBtn = document.getElementById('guide-next');
+const guideCloseBtn = document.getElementById('guide-close');
+const replayTourBtn = document.getElementById('replay-tour');
 
 let robotApp = null;
 let isHoveringRobot = false;
@@ -84,7 +95,189 @@ function initCustomCursor() {
 }
 
 // =========================================================
-// 2. SCROLL REVEAL & SECTION CHOREOGRAPHY
+// 2. GUIDED SITE TOUR & WELCOME GREETING
+// =========================================================
+const tourSteps = [
+  {
+    badge: 'UNIT 01 // ONLINE',
+    title: "Hello. I'm Unit 01.",
+    text: "Welcome to my space. Want a quick guided tour of how I'm built and how this site works?",
+    skipLabel: 'Dismiss',
+    nextLabel: 'Show Me Around',
+    targetId: 'hero',
+    section: 'hero',
+    action: () => {}
+  },
+  {
+    badge: '01 / 03 — SENTINEL CORE',
+    title: 'Pure Math. Zero 3D Files.',
+    text: 'Every curve, visor reflection, and floating arm is built live with Three.js primitives. Double-click me to spin!',
+    skipLabel: 'Skip Tour',
+    nextLabel: 'Next →',
+    targetId: 'hero',
+    section: 'hero',
+    action: () => {
+      if (robotApp) robotApp.triggerSpinReaction();
+    }
+  },
+  {
+    badge: '02 / 03 — STUDIO LIGHT',
+    title: 'Procedural Reflections.',
+    text: 'Watch me glide across the stage. A custom studio light box runs in memory so ceramic and glass stay glossy.',
+    skipLabel: 'Skip Tour',
+    nextLabel: 'Next →',
+    targetId: 'about',
+    section: 'about',
+    action: () => {}
+  },
+  {
+    badge: '03 / 03 — 60 FPS ENGINE',
+    title: 'Built for Speed.',
+    text: 'Adaptive scaling and pause-on-idle keep frame rates silky on phones and laptops alike. Enjoy exploring!',
+    skipLabel: 'Skip Tour',
+    nextLabel: 'Finish',
+    targetId: 'architecture',
+    section: 'architecture',
+    action: () => {
+      if (robotApp) robotApp.triggerClickReaction();
+    }
+  }
+];
+
+let tourIndex = 0;
+let autoAdvanceTimer = 0;
+let isTourPlaying = false;
+
+function clearAutoAdvance() {
+  if (autoAdvanceTimer) {
+    clearTimeout(autoAdvanceTimer);
+    autoAdvanceTimer = 0;
+  }
+}
+
+function renderTourStep(index) {
+  if (!guideEl) return;
+  const step = tourSteps[index];
+  if (!step) return;
+
+  tourIndex = index;
+  if (guideStepLabel) guideStepLabel.textContent = step.badge;
+  if (guideTitle) guideTitle.textContent = step.title;
+  if (guideText) guideText.textContent = step.text;
+  if (guideSkipBtn) guideSkipBtn.textContent = step.skipLabel;
+  if (guideNextBtn) guideNextBtn.textContent = step.nextLabel;
+
+  guideDots.forEach((dot, i) => {
+    dot.classList.toggle('is-active', i === index);
+  });
+
+  if (index > 0) {
+    const targetEl = document.getElementById(step.targetId);
+    if (targetEl) {
+      targetEl.scrollIntoView({
+        behavior: reducedMotionQuery.matches ? 'auto' : 'smooth',
+        block: 'center'
+      });
+    }
+    if (robotApp) {
+      robotApp.setScrollSection(step.section);
+    }
+    step.action();
+  }
+}
+
+function openGuide(startIndex = 0) {
+  if (!guideEl) return;
+  clearAutoAdvance();
+  isTourPlaying = startIndex > 0;
+  renderTourStep(startIndex);
+  guideEl.classList.add('is-open');
+}
+
+function closeGuide(returnToHero = false) {
+  if (!guideEl) return;
+  clearAutoAdvance();
+  isTourPlaying = false;
+  guideEl.classList.remove('is-open');
+
+  if (returnToHero) {
+    const heroEl = document.getElementById('hero');
+    if (heroEl) {
+      heroEl.scrollIntoView({
+        behavior: reducedMotionQuery.matches ? 'auto' : 'smooth',
+        block: 'start'
+      });
+    }
+    if (robotApp) {
+      robotApp.setScrollSection('hero');
+      robotApp.triggerClickReaction();
+    }
+  }
+}
+
+function advanceTourStep() {
+  clearAutoAdvance();
+  if (tourIndex < tourSteps.length - 1) {
+    isTourPlaying = true;
+    renderTourStep(tourIndex + 1);
+    // Gently auto-advance through the tour unless the user cancels or scrolls manually
+    autoAdvanceTimer = setTimeout(() => {
+      if (isTourPlaying && guideEl && guideEl.classList.contains('is-open')) {
+        advanceTourStep();
+      }
+    }, 5200);
+  } else {
+    closeGuide(true);
+  }
+}
+
+function initGuideControls() {
+  if (guideNextBtn) {
+    guideNextBtn.addEventListener('click', () => {
+      advanceTourStep();
+    });
+  }
+
+  if (guideSkipBtn) {
+    guideSkipBtn.addEventListener('click', () => closeGuide(false));
+  }
+
+  if (guideCloseBtn) {
+    guideCloseBtn.addEventListener('click', () => closeGuide(false));
+  }
+
+  if (replayTourBtn) {
+    replayTourBtn.addEventListener('click', () => {
+      clearAutoAdvance();
+      isTourPlaying = false;
+      window.scrollTo({
+        top: 0,
+        behavior: reducedMotionQuery.matches ? 'auto' : 'smooth'
+      });
+      if (robotApp) {
+        robotApp.replayEntrance();
+      }
+      openGuide(0);
+    });
+  }
+
+  // Stop automatic scrolling immediately if user scrolls with mouse wheel or presses Escape
+  window.addEventListener('wheel', () => {
+    if (isTourPlaying) {
+      clearAutoAdvance();
+      isTourPlaying = false;
+    }
+  }, { passive: true });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && guideEl && guideEl.classList.contains('is-open')) {
+      closeGuide(false);
+    }
+  });
+}
+
+// =========================================================
+// 3. SCROLL REVEAL & SECTION CHOREOGRAPHY
 // =========================================================
 function initScrollObservers() {
   const revealEls = document.querySelectorAll('.reveal');
@@ -107,7 +300,6 @@ function initScrollObservers() {
     revealEls.forEach((el) => el.classList.add('is-visible'));
   }
 
-  // Track active section to animate robot glides & nods between sections
   const sections = document.querySelectorAll('[data-section]');
   if ('IntersectionObserver' in window && sections.length) {
     const sectionObserver = new IntersectionObserver(
@@ -126,7 +318,7 @@ function initScrollObservers() {
 }
 
 // =========================================================
-// 3. POINTER, TOUCH, TILT & MULTI-REACTION INTERACTIONS
+// 4. POINTER, TOUCH, TILT & MULTI-REACTION INTERACTIONS
 // =========================================================
 function initRobotInteractions() {
   window.addEventListener('pointermove', (e) => {
@@ -141,7 +333,7 @@ function initRobotInteractions() {
       robotApp.setCuriousState(overButton);
 
       const overUi = Boolean(
-        e.target.closest('a, button, .editorial-card, .arch-card, .specs-panel, .contact-card, header')
+        e.target.closest('a, button, aside, .editorial-card, .arch-card, .specs-panel, .contact-card, header')
       );
       const hitRobot = !overUi && robotApp.raycastRobot(nx, ny);
 
@@ -165,10 +357,9 @@ function initRobotInteractions() {
     isHoveringRobot = false;
   });
 
-  // Single click/tap = wave & jump; Double click/tap = 360 spin
   window.addEventListener('click', (e) => {
     if (!robotApp) return;
-    if (e.target.closest('a, button, .editorial-card, .arch-card, .specs-panel, .contact-card, header')) {
+    if (e.target.closest('a, button, aside, .editorial-card, .arch-card, .specs-panel, .contact-card, header')) {
       return;
     }
 
@@ -187,14 +378,12 @@ function initRobotInteractions() {
     }
   });
 
-  // Hero CTA triggers a friendly wave before scrolling
   if (heroCta) {
     heroCta.addEventListener('click', () => {
       if (robotApp) robotApp.triggerClickReaction();
     });
   }
 
-  // Mobile touch-drag updates robot gaze smoothly without blocking page scroll
   window.addEventListener('touchmove', (e) => {
     if (!robotApp || !e.touches.length) return;
     const touch = e.touches[0];
@@ -203,7 +392,6 @@ function initRobotInteractions() {
     robotApp.setTargetPointer(nx, ny);
   }, { passive: true });
 
-  // Gentle mobile tilt support (only where browser allows without permission popup)
   if (
     !finePointerQuery.matches &&
     typeof DeviceOrientationEvent !== 'undefined' &&
@@ -219,7 +407,7 @@ function initRobotInteractions() {
 }
 
 // =========================================================
-// 4. PERFORMANCE LIFECYCLE (TAB VISIBILITY & CLEANUP)
+// 5. PERFORMANCE LIFECYCLE (TAB VISIBILITY & CLEANUP)
 // =========================================================
 function initLifecycleGuards() {
   let isTabHidden = document.hidden;
@@ -256,7 +444,7 @@ function initLifecycleGuards() {
 }
 
 // =========================================================
-// 5. LAZY 3D BOOTSTRAP (TEXT PAINTS FIRST, 3D LOADS NEXT)
+// 6. LAZY 3D BOOTSTRAP (TEXT PAINTS FIRST, 3D LOADS NEXT)
 // =========================================================
 function showFallback() {
   if (loaderEl) loaderEl.classList.add('is-hidden');
@@ -285,6 +473,9 @@ async function loadRobotEngine() {
         setTimeout(() => {
           if (loaderEl) loaderEl.classList.add('is-hidden');
         }, 180);
+      },
+      onGreet: () => {
+        openGuide(0);
       }
     });
   } catch (error) {
@@ -295,6 +486,7 @@ async function loadRobotEngine() {
 
 // Boot UI immediately so typography & layout respond at 0ms
 initCustomCursor();
+initGuideControls();
 initScrollObservers();
 initRobotInteractions();
 initLifecycleGuards();
