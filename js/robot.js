@@ -107,9 +107,9 @@ function createStudioEnvironment(renderer) {
 }
 
 /**
- * Builds the procedural 3D robot, studio lighting, and animation loop.
+ * Builds the procedural 3D robot, studio lighting, shadow entrance, and animation loop.
  */
-export function createRobotScene({ container, onProgress, onReady, reducedMotion = false }) {
+export function createRobotScene({ container, onProgress, onReady, onGreet, reducedMotion = false }) {
   if (onProgress) onProgress(20);
 
   const width = container.clientWidth || window.innerWidth;
@@ -139,13 +139,13 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
 
   const envTarget = createStudioEnvironment(renderer);
   scene.environment = envTarget.texture;
-  scene.environmentIntensity = 1.15;
+  scene.environmentIntensity = reducedMotion ? 1.15 : 0.06;
 
   // Lighting Setup
-  const hemiLight = new THREE.HemisphereLight(0xffffff, 0x121216, 0.45);
+  const hemiLight = new THREE.HemisphereLight(0xffffff, 0x121216, reducedMotion ? 0.45 : 0);
   scene.add(hemiLight);
 
-  const keyLight = new THREE.DirectionalLight(0xffffff, 2.4);
+  const keyLight = new THREE.DirectionalLight(0xffffff, reducedMotion ? 2.4 : 0);
   keyLight.position.set(-3.2, 4.8, 4.2);
   if (!isLowPowerDevice) {
     keyLight.castShadow = true;
@@ -161,11 +161,11 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
   }
   scene.add(keyLight);
 
-  const fillLight = new THREE.DirectionalLight(0xeef2ff, 0.85);
+  const fillLight = new THREE.DirectionalLight(0xeef2ff, reducedMotion ? 0.85 : 0);
   fillLight.position.set(4.5, 1.2, 2.5);
   scene.add(fillLight);
 
-  const rimLight = new THREE.DirectionalLight(0xffffff, 3.6);
+  const rimLight = new THREE.DirectionalLight(0xffffff, reducedMotion ? 3.6 : 0.3);
   rimLight.position.set(2.4, 3.8, -4.4);
   scene.add(rimLight);
 
@@ -470,7 +470,7 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
     metalness: 0.55,
     alphaMap: floorFadeTexture,
     transparent: true,
-    opacity: 0.85
+    opacity: reducedMotion ? 0.85 : 0
   });
 
   const floorMesh = new THREE.Mesh(floorGeo, floorMaterial);
@@ -487,6 +487,8 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
   const state = {
     paused: false,
     disposed: false,
+    entranceProgress: reducedMotion ? 1 : 0,
+    entranceGreeted: reducedMotion,
     targetPointer: { x: 0, y: 0 },
     smoothHeadPointer: { x: 0, y: 0 },
     smoothEyePointer: { x: 0, y: 0 },
@@ -598,6 +600,16 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
     return t * t * (3 - 2 * t);
   };
 
+  const triggerWelcomeWave = () => {
+    if (!state.waveActive) {
+      state.waveActive = true;
+      state.waveProgress = 0;
+    }
+    state.jumpActive = true;
+    state.jumpProgress = 0;
+    state.isBlinking = true;
+  };
+
   const animate = (now) => {
     if (state.disposed) return;
     rafId = requestAnimationFrame(animate);
@@ -612,6 +624,31 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
     const elapsed = now * 0.001;
     const motionFactor = reducedMotion ? 0.15 : 1;
 
+    // 0. Shadow-to-Light Entrance Choreography
+    if (state.entranceProgress < 1) {
+      state.entranceProgress = Math.min(1, state.entranceProgress + dt / 1.75);
+      const e = smoothstep(0, 1, state.entranceProgress);
+
+      keyLight.intensity = 2.4 * e;
+      fillLight.intensity = 0.85 * e;
+      rimLight.intensity = 0.3 + 3.3 * e;
+      hemiLight.intensity = 0.45 * e;
+      scene.environmentIntensity = 0.06 + 1.09 * e;
+      floorMaterial.opacity = 0.85 * e;
+
+      robotRoot.position.z = lerp(-2.2, 0, e);
+      robotRoot.scale.setScalar(lerp(0.84, 1, e));
+
+      if (state.entranceProgress >= 0.68 && !state.entranceGreeted) {
+        state.entranceGreeted = true;
+        triggerWelcomeWave();
+        if (onGreet) onGreet();
+      }
+    } else {
+      robotRoot.position.z = 0;
+      robotRoot.scale.setScalar(1);
+    }
+
     // 1. Stage section glide
     const stageLerp = 1 - Math.exp(-4.5 * dt);
     stageGroup.position.lerp(state.targetStagePos, stageLerp);
@@ -624,7 +661,7 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
     const isSleeping = state.idleDuration > 11 && !state.hoveringRobot && !state.curiousButton && !state.waveActive;
     state.standbyBlend = lerp(state.standbyBlend, isSleeping ? 1 : 0, 1 - Math.exp(-3 * dt));
 
-    // 3. Random subtle glances when idle (before standby)
+    // 3. Random subtle glances when idle
     state.glanceTimer -= dt;
     if (state.glanceTimer <= 0) {
       state.glanceTimer = 3.2 + Math.random() * 4.0;
@@ -669,7 +706,6 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
         const down = 1 - smoothstep(0.72, 1.0, p);
         waveLift = up * down;
 
-        // 2 relaxed, fluid side-to-side waves while arm is raised
         const wavePhase = clamp((p - 0.18) / 0.58, 0, 1);
         const sway = Math.sin(wavePhase * Math.PI * 4) * 0.24 * waveLift;
 
@@ -693,7 +729,7 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
       }
     }
 
-    // 5. Other Reaction Energies (Hover, Curious Tilt, Double-Click Spin, Section Nod)
+    // 5. Reaction Energies
     state.hoverEnergy = lerp(state.hoverEnergy, state.hoveringRobot ? 1 : 0, 1 - Math.exp(-8 * dt));
     state.curiousEnergy = lerp(state.curiousEnergy, state.curiousButton ? 1 : 0, 1 - Math.exp(-7 * dt));
     state.spinEnergy = Math.max(0, state.spinEnergy - dt * 0.85);
@@ -720,11 +756,9 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
     robotRoot.position.y = floatY;
     torsoGroup.scale.set(breathScale, 1, breathScale);
 
-    // Body rotation (tracking + 360 spin)
     bodyPivot.rotation.y = state.smoothBodyPointer.x * 0.2 + spinAngle;
     bodyPivot.rotation.x = -state.smoothBodyPointer.y * 0.08;
 
-    // Head rotation (tracking + friendly wave tilt + curious button tilt + section nod)
     headPivot.rotation.y = state.smoothHeadPointer.x * 0.46;
     headPivot.rotation.x = -state.smoothHeadPointer.y * 0.3 + Math.sin(elapsed * 0.9) * 0.02 * motionFactor + nodAngle;
     headPivot.rotation.z = -state.smoothHeadPointer.x * 0.06
@@ -732,7 +766,6 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
       + (state.curiousEnergy * 0.2)
       + (waveLift * 0.09);
 
-    // Eyes move inside visor ahead of head
     eyesGroup.position.x = state.smoothEyePointer.x * 0.105;
     eyesGroup.position.y = -0.01 + state.smoothEyePointer.y * 0.055;
 
@@ -758,7 +791,6 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
     leftEye.scale.y = state.blinkValue;
     rightEye.scale.y = state.blinkValue;
 
-    // Glow Intensities
     const standbyDim = 1 - state.standbyBlend * 0.48;
     const eyeGlow = (0.72 + state.hoverEnergy * 0.22 + waveLift * 0.2 + state.spinEnergy * 0.3 + Math.sin(elapsed * 2.2) * 0.05) * standbyDim;
     eyeHaloMaterial.opacity = clamp(eyeGlow, 0.25, 1);
@@ -768,7 +800,7 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
     coreHalo.scale.setScalar(0.45 + state.spinEnergy * 0.22 + state.curiousEnergy * 0.08);
     faceGlowLight.intensity = (0.36 + state.hoverEnergy * 0.25 + waveLift * 0.28 + state.spinEnergy * 0.35) * standbyDim;
 
-    // 8. Floating Arms & Polished Wave
+    // 8. Floating Arms
     const armIdleSwing = Math.sin(elapsed * 1.45 + 0.6) * 0.04 * motionFactor;
     leftArm.position.y = 0.12 + armIdleSwing;
     leftArm.rotation.z = -0.04 + state.hoverEnergy * 0.05 - state.spinEnergy * 0.25;
@@ -782,6 +814,7 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
 
   if (onProgress) onProgress(100);
   if (onReady) onReady();
+  if (reducedMotion && onGreet) onGreet();
   rafId = requestAnimationFrame(animate);
 
   return {
@@ -826,6 +859,19 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
       state.jumpActive = true;
       state.jumpProgress = 0;
       state.isBlinking = true;
+    },
+    replayEntrance() {
+      state.idleDuration = 0;
+      state.scrollSection = 'hero';
+      updateSectionTarget();
+      if (!reducedMotion) {
+        state.entranceProgress = 0;
+        state.entranceGreeted = false;
+        state.waveActive = false;
+        state.waveProgress = 0;
+      } else {
+        triggerWelcomeWave();
+      }
     },
     raycastRobot(ndcX, ndcY) {
       pointerNdc.set(ndcX, ndcY);
