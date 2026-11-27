@@ -104,7 +104,6 @@ function createStudioEnvironment(renderer) {
 
   const renderTarget = pmrem.fromScene(envScene, 0.04);
 
-  // Free temporary environment-scene resources immediately
   for (const item of disposalQueue) item.dispose();
   pmrem.dispose();
 
@@ -121,7 +120,6 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
   const height = container.clientHeight || window.innerHeight;
   const isLowPowerDevice = (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
 
-  // Renderer
   const renderer = new THREE.WebGLRenderer({
     antialias: !isLowPowerDevice,
     alpha: true,
@@ -139,17 +137,15 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
   container.appendChild(renderer.domElement);
   if (onProgress) onProgress(45);
 
-  // Scene & Camera
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(34, width / height, 0.1, 40);
   camera.position.set(0, 0.15, 6.4);
 
-  // Studio Environment Map
   const envTarget = createStudioEnvironment(renderer);
   scene.environment = envTarget.texture;
   scene.environmentIntensity = 1.15;
 
-  // Lighting Setup (Key, Fill, Rim, Ambient Hemisphere)
+  // Lighting Setup
   const hemiLight = new THREE.HemisphereLight(0xffffff, 0x121216, 0.45);
   scene.add(hemiLight);
 
@@ -183,7 +179,7 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
 
   if (onProgress) onProgress(65);
 
-  // Shared Materials (Reused across meshes for performance)
+  // Shared Materials
   const ceramicMaterial = new THREE.MeshPhysicalMaterial({
     color: 0xf4f4f6,
     roughness: 0.16,
@@ -246,7 +242,6 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
     depthWrite: false
   });
 
-  // Track unique geometries & textures for clean disposal
   const trackedGeometries = [];
   const trackGeo = (geo) => {
     trackedGeometries.push(geo);
@@ -385,13 +380,11 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
   cranium.receiveShadow = true;
   headPivot.add(cranium);
 
-  // Subtle dark center crown seam
   const crownStripGeo = trackGeo(new RoundedBoxGeometry(0.1, 0.875, 0.935, 3, 0.03));
   const crownStrip = new THREE.Mesh(crownStripGeo, darkTitaniumMaterial);
   crownStrip.position.set(0, 0.01, -0.02);
   headPivot.add(crownStrip);
 
-  // Ear Assemblies
   const earRingGeo = trackGeo(new THREE.CylinderGeometry(0.19, 0.19, 0.08, 32));
   const earCapGeo = trackGeo(new THREE.CylinderGeometry(0.13, 0.13, 0.1, 32));
   const earAccentGeo = trackGeo(new THREE.TorusGeometry(0.145, 0.008, 10, 32));
@@ -416,7 +409,6 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
     headPivot.add(earGroup);
   });
 
-  // Slender Signal Antenna on Right Ear
   const antennaStemGeo = trackGeo(new THREE.CylinderGeometry(0.012, 0.02, 0.34, 12));
   const antennaStem = new THREE.Mesh(antennaStemGeo, darkTitaniumMaterial);
   antennaStem.position.set(0.62, 0.26, -0.04);
@@ -445,7 +437,7 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
   visorGlass.renderOrder = 4;
   headPivot.add(visorGlass);
 
-  // Eyes Group (Inside Visor)
+  // Eyes Group
   const eyesGroup = new THREE.Group();
   eyesGroup.position.set(0, -0.01, 0.476);
   headPivot.add(eyesGroup);
@@ -473,7 +465,7 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
   const leftEye = createEye(-0.185);
   const rightEye = createEye(0.185);
 
-  // --- STUDIO FLOOR & SOFT SHADOW ---
+  // --- STUDIO FLOOR ---
   const floorFadeTexture = createFloorFadeTexture();
   const floorGeo = trackGeo(new THREE.CircleGeometry(3.2, 48));
   const floorMaterial = new THREE.MeshStandardMaterial({
@@ -494,7 +486,7 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
   if (onProgress) onProgress(90);
 
   // =========================================================
-  // RESPONSIVE FRAMING & STATE
+  // RESPONSIVE FRAMING & REACTION STATES
   // =========================================================
   const state = {
     paused: false,
@@ -505,8 +497,9 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
     smoothBodyPointer: { x: 0, y: 0 },
     hoveringRobot: false,
     hoverEnergy: 0,
+    curiousButton: false,
+    curiousEnergy: 0,
     scrollSection: 'hero',
-    scrollProgress: 0,
     baseStagePos: new THREE.Vector3(1.38, 0.04, 0),
     targetStagePos: new THREE.Vector3(1.38, 0.04, 0),
     baseStageRotY: -0.22,
@@ -519,6 +512,10 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
     glanceTimer: 4.5,
     glanceOffset: { x: 0, y: 0 },
     clickEnergy: 0,
+    spinEnergy: 0,
+    nodEnergy: 0,
+    idleDuration: 0,
+    standbyBlend: 0,
     lastFrameTime: performance.now()
   };
 
@@ -572,7 +569,6 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
   stageGroup.rotation.y = state.targetStageRotY;
   stageGroup.scale.setScalar(state.targetScale);
 
-  // Raycaster for hover / click detection on robot meshes
   const raycaster = new THREE.Raycaster();
   const pointerNdc = new THREE.Vector2();
   const interactiveMeshes = [cranium, visorGlass, chestMesh, leftArm, rightArm];
@@ -609,20 +605,26 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
     const dt = Math.min((now - state.lastFrameTime) / 1000, 0.05);
     state.lastFrameTime = now;
     const elapsed = now * 0.001;
+    const motionFactor = reducedMotion ? 0.15 : 1;
 
-    // 1. Smooth stage transitions across sections
+    // 1. Stage section glide
     const stageLerp = 1 - Math.exp(-4.5 * dt);
     stageGroup.position.lerp(state.targetStagePos, stageLerp);
     stageGroup.rotation.y = lerp(stageGroup.rotation.y, state.targetStageRotY, stageLerp);
     const nextScale = lerp(stageGroup.scale.x, state.targetScale, stageLerp);
     stageGroup.scale.setScalar(nextScale);
 
-    // 2. Idle glance offset when cursor is near center
+    // 2. Standby sleep after 11 seconds of inactivity
+    state.idleDuration += dt;
+    const isSleeping = state.idleDuration > 11 && !state.hoveringRobot && !state.curiousButton;
+    state.standbyBlend = lerp(state.standbyBlend, isSleeping ? 1 : 0, 1 - Math.exp(-3 * dt));
+
+    // 3. Random subtle glances when idle (before standby)
     state.glanceTimer -= dt;
     if (state.glanceTimer <= 0) {
       state.glanceTimer = 3.2 + Math.random() * 4.0;
       const isQuiet = Math.abs(state.targetPointer.x) < 0.08 && Math.abs(state.targetPointer.y) < 0.08;
-      if (isQuiet && !reducedMotion) {
+      if (isQuiet && !reducedMotion && !isSleeping) {
         state.glanceOffset.x = (Math.random() - 0.5) * 0.35;
         state.glanceOffset.y = (Math.random() - 0.5) * 0.2;
       } else {
@@ -631,10 +633,10 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
       }
     }
 
-    const goalX = clamp(state.targetPointer.x + state.glanceOffset.x, -1, 1);
-    const goalY = clamp(state.targetPointer.y + state.glanceOffset.y, -1, 1);
+    const activeTrack = 1 - state.standbyBlend * 0.85;
+    const goalX = clamp((state.targetPointer.x + state.glanceOffset.x) * activeTrack, -1, 1);
+    const goalY = clamp((state.targetPointer.y + state.glanceOffset.y) * activeTrack - state.standbyBlend * 0.35, -1, 1);
 
-    // Layered tracking speeds (eyes fastest, head medium, body subtle)
     const eyeLerp = 1 - Math.exp(-14 * dt);
     const headLerp = 1 - Math.exp(-7.5 * dt);
     const bodyLerp = 1 - Math.exp(-4.2 * dt);
@@ -646,42 +648,60 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
     state.smoothBodyPointer.x = lerp(state.smoothBodyPointer.x, goalX, bodyLerp);
     state.smoothBodyPointer.y = lerp(state.smoothBodyPointer.y, goalY, bodyLerp);
 
-    // 3. Hover & Click reaction energies
-    const hoverTarget = state.hoveringRobot ? 1 : 0;
-    state.hoverEnergy = lerp(state.hoverEnergy, hoverTarget, 1 - Math.exp(-8 * dt));
+    // 4. Reaction Energies (Hover, Curious Tilt, Click Wave, Double-Click Spin, Section Nod)
+    state.hoverEnergy = lerp(state.hoverEnergy, state.hoveringRobot ? 1 : 0, 1 - Math.exp(-8 * dt));
+    state.curiousEnergy = lerp(state.curiousEnergy, state.curiousButton ? 1 : 0, 1 - Math.exp(-7 * dt));
     state.clickEnergy = Math.max(0, state.clickEnergy - dt * 1.35);
+    state.spinEnergy = Math.max(0, state.spinEnergy - dt * 0.92);
+    state.nodEnergy = Math.max(0, state.nodEnergy - dt * 1.8);
 
     const clickBounce = state.clickEnergy > 0
       ? Math.sin(state.clickEnergy * Math.PI * 2) * 0.16 * state.clickEnergy
       : 0;
 
-    // 4. Floating & Breathing
-    const motionFactor = reducedMotion ? 0.15 : 1;
-    const floatY = Math.sin(elapsed * 1.45) * 0.075 * motionFactor + clickBounce;
-    const breathScale = 1 + Math.sin(elapsed * 2.2) * 0.012 * motionFactor;
+    let spinAngle = 0;
+    if (state.spinEnergy > 0 && !reducedMotion) {
+      const progress = 1 - state.spinEnergy;
+      const easedSpin = 1 - Math.pow(1 - progress, 3);
+      spinAngle = easedSpin * Math.PI * 2;
+    }
+
+    const nodAngle = state.nodEnergy > 0 && !reducedMotion
+      ? Math.sin((1 - state.nodEnergy) * Math.PI * 2) * 0.16 * state.nodEnergy
+      : 0;
+
+    // 5. Floating & Breathing
+    const breathSpeed = 2.2 - state.standbyBlend * 0.7;
+    const floatY = Math.sin(elapsed * 1.45) * 0.075 * motionFactor * (1 - state.standbyBlend * 0.45)
+      - state.standbyBlend * 0.08
+      + clickBounce;
+    const breathScale = 1 + Math.sin(elapsed * breathSpeed) * 0.012 * motionFactor;
 
     robotRoot.position.y = floatY;
     torsoGroup.scale.set(breathScale, 1, breathScale);
 
-    // Subtle body lean toward cursor
-    bodyPivot.rotation.y = state.smoothBodyPointer.x * 0.2;
+    // Body rotation (tracking + 360 spin)
+    bodyPivot.rotation.y = state.smoothBodyPointer.x * 0.2 + spinAngle;
     bodyPivot.rotation.x = -state.smoothBodyPointer.y * 0.08;
 
-    // Head rotation toward cursor
+    // Head rotation (tracking + curious button tilt + section nod)
     headPivot.rotation.y = state.smoothHeadPointer.x * 0.46;
-    headPivot.rotation.x = -state.smoothHeadPointer.y * 0.3 + Math.sin(elapsed * 0.9) * 0.02 * motionFactor;
-    headPivot.rotation.z = -state.smoothHeadPointer.x * 0.06 + (state.hoverEnergy * 0.05);
+    headPivot.rotation.x = -state.smoothHeadPointer.y * 0.3 + Math.sin(elapsed * 0.9) * 0.02 * motionFactor + nodAngle;
+    headPivot.rotation.z = -state.smoothHeadPointer.x * 0.06 + (state.hoverEnergy * 0.05) + (state.curiousEnergy * 0.2);
 
-    // Eyes move inside visor slightly ahead of head
+    // Eyes move inside visor ahead of head
     eyesGroup.position.x = state.smoothEyePointer.x * 0.105;
     eyesGroup.position.y = -0.01 + state.smoothEyePointer.y * 0.055;
 
-    // 5. Blinking
+    // 6. Blinking & Standby Eyelids
     state.blinkTimer -= dt;
-    if (state.blinkTimer <= 0 && !state.isBlinking) {
+    if (state.blinkTimer <= 0 && !state.isBlinking && !isSleeping) {
       state.isBlinking = true;
       state.blinkTimer = 2.6 + Math.random() * 3.8;
     }
+
+    const targetEyeHeight = (1 + state.hoverEnergy * 0.18 + state.clickEnergy * 0.25 + state.curiousEnergy * 0.1)
+      * (1 - state.standbyBlend * 0.65);
 
     if (state.isBlinking) {
       state.blinkValue = lerp(state.blinkValue, 0.08, 1 - Math.exp(-32 * dt));
@@ -689,29 +709,32 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
         state.isBlinking = false;
       }
     } else {
-      const alertScale = 1 + state.hoverEnergy * 0.18 + state.clickEnergy * 0.25;
-      state.blinkValue = lerp(state.blinkValue, alertScale, 1 - Math.exp(-18 * dt));
+      state.blinkValue = lerp(state.blinkValue, targetEyeHeight, 1 - Math.exp(-16 * dt));
     }
 
     leftEye.scale.y = state.blinkValue;
     rightEye.scale.y = state.blinkValue;
 
-    // Eye & Core Glow Intensity
-    const eyeGlow = 0.72 + state.hoverEnergy * 0.22 + state.clickEnergy * 0.3 + Math.sin(elapsed * 2.2) * 0.05;
-    eyeHaloMaterial.opacity = clamp(eyeGlow, 0.4, 1);
-    coreHaloMaterial.opacity = 0.42 + Math.sin(elapsed * 2.2) * 0.14 + state.hoverEnergy * 0.25;
-    faceGlowLight.intensity = 0.36 + state.hoverEnergy * 0.25 + state.clickEnergy * 0.4;
+    // Glow Intensities
+    const standbyDim = 1 - state.standbyBlend * 0.48;
+    const eyeGlow = (0.72 + state.hoverEnergy * 0.22 + state.clickEnergy * 0.28 + state.spinEnergy * 0.3 + Math.sin(elapsed * 2.2) * 0.05) * standbyDim;
+    eyeHaloMaterial.opacity = clamp(eyeGlow, 0.25, 1);
 
-    // 6. Floating Arms & Wave Reaction on Click
+    const coreGlow = (0.42 + Math.sin(elapsed * breathSpeed) * 0.14 + state.hoverEnergy * 0.2 + state.curiousEnergy * 0.22 + state.spinEnergy * 0.35) * standbyDim;
+    coreHaloMaterial.opacity = clamp(coreGlow, 0.2, 1);
+    coreHalo.scale.setScalar(0.45 + state.spinEnergy * 0.22 + state.curiousEnergy * 0.08);
+    faceGlowLight.intensity = (0.36 + state.hoverEnergy * 0.25 + state.clickEnergy * 0.4 + state.spinEnergy * 0.35) * standbyDim;
+
+    // 7. Floating Arms & Wave Reaction
     const armIdleSwing = Math.sin(elapsed * 1.45 + 0.6) * 0.04 * motionFactor;
     leftArm.position.y = 0.12 + armIdleSwing;
-    leftArm.rotation.z = -0.04 + state.hoverEnergy * 0.05;
+    leftArm.rotation.z = -0.04 + state.hoverEnergy * 0.05 - state.spinEnergy * 0.25;
 
     const waveAngle = state.clickEnergy > 0
       ? Math.sin(state.clickEnergy * Math.PI * 5) * 0.42 * state.clickEnergy + 0.85 * state.clickEnergy
       : 0;
     rightArm.position.y = 0.12 - armIdleSwing;
-    rightArm.rotation.z = 0.04 - state.hoverEnergy * 0.05 + waveAngle;
+    rightArm.rotation.z = 0.04 - state.hoverEnergy * 0.05 + waveAngle + state.spinEnergy * 0.25;
     rightArm.rotation.x = -state.clickEnergy * 0.35;
 
     renderer.render(scene, camera);
@@ -721,24 +744,39 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
   if (onReady) onReady();
   rafId = requestAnimationFrame(animate);
 
-  // Public API exposed to main.js
   return {
     setTargetPointer(nx, ny) {
+      const wasSleeping = state.idleDuration > 11;
+      state.idleDuration = 0;
+      if (wasSleeping) state.isBlinking = true;
       state.targetPointer.x = clamp(nx, -1, 1);
       state.targetPointer.y = clamp(ny, -1, 1);
     },
-    setScrollSection(sectionName, progress = 0) {
-      state.scrollProgress = progress;
+    setScrollSection(sectionName) {
       if (state.scrollSection !== sectionName) {
         state.scrollSection = sectionName;
+        state.nodEnergy = 1;
+        state.idleDuration = 0;
         updateSectionTarget();
       }
     },
     setHoveringRobot(hovering) {
       state.hoveringRobot = Boolean(hovering);
+      if (hovering) state.idleDuration = 0;
+    },
+    setCuriousState(active) {
+      state.curiousButton = Boolean(active);
+      if (active) state.idleDuration = 0;
     },
     triggerClickReaction() {
+      state.idleDuration = 0;
       state.clickEnergy = 1;
+      state.isBlinking = true;
+    },
+    triggerSpinReaction() {
+      state.idleDuration = 0;
+      state.spinEnergy = 1;
+      state.clickEnergy = Math.max(state.clickEnergy, 0.7);
       state.isBlinking = true;
     },
     raycastRobot(ndcX, ndcY) {
