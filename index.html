@@ -4,19 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#050505">
-  <title>UNIT 01 — Real-Time Procedural 3D Sentinel</title>
-  <meta name="description" content="A minimalist black-and-white 3D web experience featuring a real-time procedural robot built entirely with Three.js primitives, physically based lighting, and smooth cursor tracking.">
+  <title>AXION — AI Model Marketplace | Created by Meka Develops</title>
+  <meta name="description" content="AXION is an independent monochrome AI model marketplace created by Meka Develops. Preview specialized Vision, Kinetic, and Pulse intelligence cores live in 3D.">
 
   <!-- Open Graph / Social Sharing -->
-  <meta property="og:title" content="UNIT 01 — Real-Time Procedural 3D Sentinel">
-  <meta property="og:description" content="Sculpted entirely from math, code, and physically based browser lighting.">
+  <meta property="og:title" content="AXION — AI Model Marketplace by Meka Develops">
+  <meta property="og:description" content="Specialized AI models with real-time 3D inspection, transparent platform rules, and zero third-party affiliations.">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
 
-  <!-- Inline Monochrome SVG Favicon (Zero extra HTTP request) -->
+  <!-- Inline Monochrome SVG Favicon -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23050505'/%3E%3Crect x='14' y='22' width='36' height='20' rx='10' fill='%23ffffff'/%3E%3Crect x='18' y='26' width='28' height='12' rx='6' fill='%23050505'/%3E%3Ccircle cx='26' cy='32' r='2.5' fill='%23ffffff'/%3E%3Ccircle cx='38' cy='32' r='2.5' fill='%23ffffff'/%3E%3C/svg%3E">
 
-  <!-- Google Fonts: Space Grotesk (Display), Inter (Body), JetBrains Mono (Technical Labels) -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
@@ -29,23 +29,21 @@
   <!-- Subtle cinematic film grain -->
   <div class="grain-overlay" aria-hidden="true"></div>
 
-  <!-- Custom cursor (activated smoothly by JavaScript on desktop) -->
+  <!-- Custom cursor (Desktop Fine Pointer Only) -->
   <div class="cursor-dot" id="cursor-dot" aria-hidden="true"></div>
   <div class="cursor-ring" id="cursor-ring" aria-hidden="true"></div>
 
   <!-- Fixed 3D Viewport Stage -->
   <div class="robot-stage" id="robot-stage">
-    <div id="canvas-container" class="canvas-container" aria-label="Interactive 3D Robot"></div>
+    <div id="canvas-container" class="canvas-container" aria-label="Interactive AXION 3D Core"></div>
 
-    <!-- Thin white loading line shown lazily while 3D engine initializes -->
     <div id="robot-loader" class="robot-loader" role="status" aria-live="polite">
       <div class="loader-track">
         <div class="loader-bar" id="loader-bar"></div>
       </div>
-      <span class="loader-label">INITIALIZING 3D ENGINE</span>
+      <span class="loader-label">INITIALIZING AXION CORE</span>
     </div>
 
-    <!-- Fallback shown only if WebGL is unsupported -->
     <div id="webgl-fallback" class="webgl-fallback" hidden>
       <div class="fallback-emblem" aria-hidden="true">
         <div class="fallback-visor">
@@ -57,12 +55,12 @@
     </div>
   </div>
 
-  <!-- Minimalist Greeting & Guided Site Tour HUD -->
-  <aside id="sentinel-guide" class="sentinel-guide" aria-label="Unit 01 Interactive Guide" aria-live="polite">
+  <!-- Minimalist First-Visit Guide HUD -->
+  <aside id="sentinel-guide" class="sentinel-guide" aria-label="AXION Interactive Guide" aria-live="polite">
     <div class="guide-top">
       <span class="guide-badge" id="guide-badge">
         <span class="guide-status-dot" aria-hidden="true"></span>
-        <span id="guide-step-label">UNIT 01 // ONLINE</span>
+        <span id="guide-step-label">AXION // ONLINE</span>
       </span>
       <button type="button" class="guide-close" id="guide-close" aria-label="Dismiss guide" data-cursor="button">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -71,9 +69,9 @@
       </button>
     </div>
 
-    <h2 class="guide-title" id="guide-title">Hello. I'm Unit 01.</h2>
+    <h2 class="guide-title" id="guide-title">Welcome to AXION.</h2>
     <p class="guide-text" id="guide-text">
-      Welcome to my space. Want a quick 15-second tour of how I'm built and how to interact with me?
+      Built independently by Meka Develops. Want a quick tour of our AI models and live 3D preview?
     </p>
 
     <div class="guide-footer">
@@ -94,16 +92,16 @@
   <!-- Top Navigation -->
   <header class="site-header">
     <div class="container header-inner">
-      <a href="#hero" class="brand" data-cursor="link">
+      <a href="index.html" class="brand" data-cursor="link">
         <span class="brand-dot" aria-hidden="true"></span>
-        <span>UNIT // 01</span>
+        <span>AXION</span>
+        <span class="brand-sub">BY MEKA DEVELOPS</span>
       </a>
 
       <nav class="site-nav" aria-label="Primary navigation">
-        <a href="#about" class="nav-link" data-cursor="link">Concept</a>
-        <a href="#architecture" class="nav-link" data-cursor="link">Architecture</a>
-        <a href="#specs" class="nav-link" data-cursor="link">Specs</a>
-        <a href="#contact" class="nav-link" data-cursor="link">Contact</a>
+        <a href="index.html" class="nav-link is-active" data-cursor="link">Overview</a>
+        <a href="models.html" class="nav-link" data-cursor="link">Models</a>
+        <a href="terms.html" class="nav-link" data-cursor="link">Terms &amp; Policy</a>
       </nav>
     </div>
   </header>
@@ -113,150 +111,185 @@
     <section id="hero" class="section hero-section" data-section="hero">
       <div class="container hero-grid">
         <div class="hero-content">
-          <p class="eyebrow hero-animate">REAL-TIME PROCEDURAL 3D • WEBGL</p>
-          <h1 class="hero-title hero-animate">FORM BUILT<br>FROM LIGHT.</h1>
+          <p class="eyebrow hero-animate">AXION AI MARKETPLACE • MEKA DEVELOPS</p>
+          <h1 class="hero-title hero-animate">INTELLIGENCE<br>DISTILLED.</h1>
           <p class="hero-subtitle hero-animate">
-            An autonomous 3D sentinel sculpted entirely from mathematical primitives, physically based reflections, and real-time browser physics.
+            Purpose-built monochrome AI models for vision, motion, and voice. Preview each neural core live in 3D before you deploy—independently engineered by Meka Develops.
           </p>
 
           <div class="hero-actions hero-animate">
-            <a href="#about" class="btn-primary" id="hero-cta" data-cursor="button">
-              <span>Explore Architecture</span>
+            <a href="models.html" class="btn-primary" id="hero-cta" data-cursor="button">
+              <span>Explore Models</span>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M8 3V13M8 13L12.5 8.5M8 13L3.5 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M3 8H13M13 8L8.5 3.5M13 8L8.5 12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </a>
+            <a href="#preview" class="btn-secondary" data-cursor="button">Test Live Core</a>
           </div>
 
           <p class="hero-hint hero-animate" id="hero-hint">
-            Move cursor to guide • Click or double-click unit •
+            Move cursor to guide • Double-click core to spin •
             <button type="button" class="hint-replay" id="replay-tour" data-cursor="button">Replay Tour</button>
           </p>
         </div>
 
-        <!-- Reserves clean stage room for the 3D robot -->
         <div class="hero-stage-spacer" aria-hidden="true"></div>
       </div>
     </section>
 
-    <!-- ABOUT / CONCEPT SECTION -->
-    <section id="about" class="section content-section" data-section="about">
+    <!-- LIVE MODEL PREVIEW SWITCHER -->
+    <section id="preview" class="section content-section" data-section="about">
       <div class="container">
         <div class="editorial-card reveal">
-          <p class="eyebrow">01 / CONCEPT</p>
-          <h2 class="section-title">Zero external models.<br>Zero heavy textures.</h2>
-          <div class="editorial-columns">
-            <p class="body-text">
-              Most 3D websites download massive pre-made model files that slow down the browser. UNIT 01 takes a purer engineering path: every ceramic curve, glass visor, joint ring, and metallic surface is generated mathematically in code the moment you arrive.
-            </p>
-            <p class="body-text">
-              Lit by a custom-synthesized studio environment and driven by layered spring physics, the sentinel responds naturally to your presence while keeping the entire page ultra-lightweight.
-            </p>
+          <p class="eyebrow">01 / LIVE MODEL PREVIEW</p>
+          <h2 class="section-title">Switch models. Watch the core adapt.</h2>
+          <p class="body-text switcher-intro">
+            Unlike generic AI sites, AXION lets you inspect how each specialized model behaves in real time. Select a model below to shift the 3D sentinel into that core's live operating mode.
+          </p>
+
+          <div class="model-switcher" role="tablist" aria-label="AXION Model Modes">
+            <button type="button" class="model-pill is-active" role="tab" aria-selected="true" data-model-mode="vision" data-cursor="button">
+              <span class="pill-code">AXN-V2</span>
+              <span class="pill-name">AXION Vision</span>
+            </button>
+            <button type="button" class="model-pill" role="tab" aria-selected="false" data-model-mode="kinetic" data-cursor="button">
+              <span class="pill-code">AXN-K1</span>
+              <span class="pill-name">AXION Kinetic</span>
+            </button>
+            <button type="button" class="model-pill" role="tab" aria-selected="false" data-model-mode="pulse" data-cursor="button">
+              <span class="pill-code">AXN-P3</span>
+              <span class="pill-name">AXION Pulse</span>
+            </button>
+          </div>
+
+          <div class="model-live-readout" id="model-live-readout" aria-live="polite">
+            <div class="readout-main">
+              <h3 class="readout-title" id="readout-title">AXION Vision v2 — Spatial Optical Tracking</h3>
+              <p class="body-text" id="readout-desc">
+                Engineered for high-precision cursor locking, micro-scan optics, and clearcoat spatial awareness. Ideal for interactive interfaces and visual inspection pipelines.
+              </p>
+            </div>
+            <div class="readout-meta">
+              <div class="readout-stat">
+                <span class="spec-label">Latency</span>
+                <span class="readout-val" id="readout-latency">12 ms</span>
+              </div>
+              <div class="readout-stat">
+                <span class="spec-label">Tier</span>
+                <span class="readout-val" id="readout-price">$29 / mo</span>
+              </div>
+              <a href="models.html" class="btn-secondary readout-link" data-cursor="button">Full Specs →</a>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ARCHITECTURE SECTION -->
+    <!-- TRUST & PLATFORM ARCHITECTURE -->
     <section id="architecture" class="section content-section" data-section="architecture">
       <div class="container">
         <div class="section-header reveal">
-          <p class="eyebrow">02 / ARCHITECTURE</p>
-          <h2 class="section-title">Engineered for precision.</h2>
+          <p class="eyebrow">02 / BUILT FOR TRUST</p>
+          <h2 class="section-title">Independent. Transparent. Fast.</h2>
         </div>
 
         <div class="arch-grid">
           <article class="arch-card reveal">
             <span class="card-index">01</span>
-            <h3 class="card-title">Procedural Geometry</h3>
+            <h3 class="card-title">100% Independent Build</h3>
             <p class="card-text">
-              Constructed purely from Three.js primitives—rounded shells, torus joints, and optical lenses—resulting in crisp edges at any resolution.
+              Designed and coded completely in-house by Meka Develops—never resold or connected to any external third-party AI wrapper.
             </p>
           </article>
 
           <article class="arch-card reveal">
             <span class="card-index">02</span>
-            <h3 class="card-title">Physically Based Light</h3>
+            <h3 class="card-title">Strict Rules &amp; Privacy</h3>
             <p class="card-text">
-              A generated monochrome studio environment map creates authentic clearcoat reflections across matte titanium and glossy white ceramic.
+              Zero tracking cookies, zero hidden data collection, and crystal-clear terms of use published openly for every visitor.
             </p>
           </article>
 
           <article class="arch-card reveal">
             <span class="card-index">03</span>
-            <h3 class="card-title">Kinetic Tracking</h3>
+            <h3 class="card-title">Real-Time 3D Inspection</h3>
             <p class="card-text">
-              Multi-stage interpolation allows eyes, head, and torso to follow your cursor at different speeds with organic breathing and blinking.
+              Test model responsiveness visually with physically based lighting and layered kinetic tracking right inside your browser.
             </p>
           </article>
 
           <article class="arch-card reveal">
             <span class="card-index">04</span>
-            <h3 class="card-title">Zero-Overhead Engine</h3>
+            <h3 class="card-title">Zero-Bloat Performance</h3>
             <p class="card-text">
-              Adaptive pixel scaling, shared GPU geometries, and automatic render pausing when idle keep frame rates smooth on every device.
+              Instant text paint, lazy WebGL loading, and automatic idle render pausing ensure smooth performance across desktop and mobile.
             </p>
           </article>
         </div>
       </div>
     </section>
 
-    <!-- SPECS SECTION -->
+    <!-- TELEMETRY STRIP -->
     <section id="specs" class="section content-section" data-section="specs">
       <div class="container">
         <div class="specs-panel reveal">
           <div class="specs-header">
-            <p class="eyebrow">03 / TELEMETRY</p>
-            <h2 class="section-title">Performance by design.</h2>
+            <p class="eyebrow">03 / PLATFORM METRICS</p>
+            <h2 class="section-title">Clarity at every layer.</h2>
           </div>
 
           <div class="specs-grid">
             <div class="spec-item">
+              <span class="spec-value">03</span>
+              <span class="spec-label">Specialized Models</span>
+            </div>
+            <div class="spec-item">
               <span class="spec-value">60 FPS</span>
-              <span class="spec-label">Target Frame Rate</span>
+              <span class="spec-label">3D Viewport Target</span>
             </div>
             <div class="spec-item">
-              <span class="spec-value">0 KB</span>
-              <span class="spec-label">External 3D Files</span>
-            </div>
-            <div class="spec-item">
-              <span class="spec-value">PBR</span>
-              <span class="spec-label">Clearcoat Shaders</span>
+              <span class="spec-value">ZERO</span>
+              <span class="spec-label">Third-Party Affiliations</span>
             </div>
             <div class="spec-item">
               <span class="spec-value">100%</span>
-              <span class="spec-label">Native ES Modules</span>
+              <span class="spec-label">Built by Meka Develops</span>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- CONTACT / FOOTER SECTION -->
+    <!-- CLOSING CTA & FOOTER -->
     <section id="contact" class="section contact-section" data-section="contact">
       <div class="container">
         <div class="contact-card reveal">
-          <p class="eyebrow">04 / DIALOGUE</p>
-          <h2 class="contact-title">Built to prove code is a visual medium.</h2>
+          <p class="eyebrow">04 / DEPLOYMENT</p>
+          <h2 class="contact-title">Compare every AXION model and rulebook.</h2>
           <p class="body-text contact-desc">
-            Designed and engineered with Three.js, modern CSS, and zero build dependencies.
+            Explore full pricing tiers, generate a sandbox preview key, or review our independence policy.
           </p>
           <div class="contact-actions">
-            <a href="#hero" class="btn-primary" id="back-to-top" data-cursor="button">
-              <span>Return to Sentinel</span>
+            <a href="models.html" class="btn-primary" data-cursor="button">
+              <span>Open Model Marketplace</span>
+            </a>
+            <a href="terms.html" class="btn-secondary" data-cursor="button">
+              <span>Terms &amp; Policy</span>
             </a>
           </div>
         </div>
 
         <footer class="site-footer">
-          <span>UNIT 01 — MONOCHROME 3D SHOWCASE</span>
-          <span>PURE BLACK &amp; WHITE • REAL-TIME WEBGL</span>
+          <span>AXION — CREATED INDEPENDENTLY BY MEKA DEVELOPS</span>
+          <div class="footer-links">
+            <a href="models.html" data-cursor="link">Models</a>
+            <a href="terms.html" data-cursor="link">Terms &amp; Rules</a>
+          </div>
         </footer>
       </div>
     </section>
   </main>
 
-  <!-- Pinned Three.js Import Map (Zero build tools required) -->
   <script type="importmap">
     {
       "imports": {
