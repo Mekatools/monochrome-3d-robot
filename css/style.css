@@ -43,7 +43,6 @@ body {
   color: var(--text-primary);
   line-height: 1.6;
   overflow-x: hidden;
-  selection-background-color: #ffffff;
 }
 
 ::selection {
@@ -291,6 +290,168 @@ html.cursor-active .cursor-ring {
 }
 
 /* =========================================================
+   SENTINEL INTERACTIVE GUIDE HUD
+   ========================================================= */
+
+.sentinel-guide {
+  position: fixed;
+  right: 28px;
+  bottom: 28px;
+  z-index: 35;
+  width: min(370px, calc(100vw - 32px));
+  padding: 20px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 18px;
+  background: rgba(10, 10, 12, 0.86);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.68);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(16px);
+  transition:
+    opacity 0.55s var(--ease-out-expo),
+    transform 0.55s var(--ease-out-expo),
+    visibility 0.55s ease;
+}
+
+.sentinel-guide.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.guide-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.guide-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  color: var(--text-secondary);
+}
+
+.guide-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.9);
+}
+
+.guide-close {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.guide-close:hover,
+.guide-close:focus-visible {
+  color: #ffffff;
+  border-color: var(--border-subtle);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.guide-title {
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: 1.08rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.guide-text {
+  margin: 0 0 18px;
+  font-size: 0.88rem;
+  font-weight: 300;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.guide-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.guide-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.guide-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  transition: width 0.3s var(--ease-out-expo), background-color 0.3s ease;
+}
+
+.guide-dot.is-active {
+  width: 18px;
+  background: #ffffff;
+}
+
+.guide-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.guide-skip {
+  background: transparent;
+  border: none;
+  padding: 7px 10px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+}
+
+.guide-skip:hover,
+.guide-skip:focus-visible {
+  color: var(--text-primary);
+}
+
+.guide-next {
+  background: #ffffff;
+  color: #050505;
+  border: 1px solid #ffffff;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  transition: transform 0.25s var(--ease-out-expo), box-shadow 0.25s ease;
+}
+
+.guide-next:hover,
+.guide-next:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.25);
+}
+
+/* =========================================================
    LAYOUT & NAVIGATION
    ========================================================= */
 
@@ -491,9 +652,30 @@ main {
   margin: 28px 0 0;
   font-family: var(--font-mono);
   font-size: 0.72rem;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-muted);
+  line-height: 1.8;
+}
+
+.hint-replay {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: 4px;
+  font-family: inherit;
+  font-size: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.2s ease;
+}
+
+.hint-replay:hover,
+.hint-replay:focus-visible {
+  color: #ffffff;
 }
 
 .hero-stage-spacer {
@@ -731,7 +913,6 @@ html.js-ready .reveal.is-visible {
     gap: 20px;
   }
 
-  /* Put 3D space at the top on phones/tablets, text cleanly below */
   .hero-stage-spacer {
     order: -1;
     min-height: 36vh;
@@ -742,6 +923,14 @@ html.js-ready .reveal.is-visible {
     right: 50%;
     top: 28%;
     transform: translate(50%, -50%);
+  }
+
+  .sentinel-guide {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    width: auto;
+    padding: 16px 18px;
   }
 
   .editorial-columns,
@@ -799,7 +988,8 @@ html.js-ready .reveal.is-visible {
   .reveal,
   .arch-card,
   .btn-primary,
-  .nav-link::after {
+  .nav-link::after,
+  .sentinel-guide {
     transition: none !important;
   }
 }
