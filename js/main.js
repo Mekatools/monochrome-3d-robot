@@ -1,7 +1,7 @@
 /**
  * UNIT 01 — Application Controller
  * Handles lazy 3D engine initialization, custom cursor, pointer/tilt tracking,
- * scroll choreography, reveal animations, and performance pause states.
+ * curious button reactions, double-tap spin, scroll choreography, and pause states.
  */
 
 const rootEl = document.documentElement;
@@ -21,6 +21,7 @@ const heroCta = document.getElementById('hero-cta');
 
 let robotApp = null;
 let isHoveringRobot = false;
+let lastTapTime = 0;
 
 // =========================================================
 // 1. CUSTOM SMOOTH CURSOR (Desktop Fine Pointer Only)
@@ -106,7 +107,7 @@ function initScrollObservers() {
     revealEls.forEach((el) => el.classList.add('is-visible'));
   }
 
-  // Track active section to animate robot transitions between sections
+  // Track active section to animate robot glides & nods between sections
   const sections = document.querySelectorAll('[data-section]');
   if ('IntersectionObserver' in window && sections.length) {
     const sectionObserver = new IntersectionObserver(
@@ -125,7 +126,7 @@ function initScrollObservers() {
 }
 
 // =========================================================
-// 3. POINTER, TOUCH, TILT & CLICK INTERACTIONS
+// 3. POINTER, TOUCH, TILT & MULTI-REACTION INTERACTIONS
 // =========================================================
 function initRobotInteractions() {
   window.addEventListener('pointermove', (e) => {
@@ -135,8 +136,10 @@ function initRobotInteractions() {
     const ny = -(e.clientY / window.innerHeight) * 2 + 1;
     robotApp.setTargetPointer(nx, ny);
 
-    // Raycast hover only when not over UI buttons or text cards
     if (e.pointerType === 'mouse') {
+      const overButton = Boolean(e.target.closest('[data-cursor="button"]'));
+      robotApp.setCuriousState(overButton);
+
       const overUi = Boolean(
         e.target.closest('a, button, .editorial-card, .arch-card, .specs-panel, .contact-card, header')
       );
@@ -156,12 +159,13 @@ function initRobotInteractions() {
     if (robotApp) {
       robotApp.setTargetPointer(0, 0);
       robotApp.setHoveringRobot(false);
+      robotApp.setCuriousState(false);
     }
     if (cursorRing) cursorRing.classList.remove('is-robot');
     isHoveringRobot = false;
   });
 
-  // Click or tap directly on the robot triggers jump, blink & wave
+  // Single click/tap = wave & jump; Double click/tap = 360 spin
   window.addEventListener('click', (e) => {
     if (!robotApp) return;
     if (e.target.closest('a, button, .editorial-card, .arch-card, .specs-panel, .contact-card, header')) {
@@ -172,16 +176,32 @@ function initRobotInteractions() {
     const ny = -(e.clientY / window.innerHeight) * 2 + 1;
 
     if (robotApp.raycastRobot(nx, ny)) {
-      robotApp.triggerClickReaction();
+      const now = performance.now();
+      if (now - lastTapTime < 340) {
+        robotApp.triggerSpinReaction();
+        lastTapTime = 0;
+      } else {
+        robotApp.triggerClickReaction();
+        lastTapTime = now;
+      }
     }
   });
 
-  // Hero button gives a subtle friendly wave as you scroll down
+  // Hero CTA triggers a friendly wave before scrolling
   if (heroCta) {
     heroCta.addEventListener('click', () => {
       if (robotApp) robotApp.triggerClickReaction();
     });
   }
+
+  // Mobile touch-drag updates robot gaze smoothly without blocking page scroll
+  window.addEventListener('touchmove', (e) => {
+    if (!robotApp || !e.touches.length) return;
+    const touch = e.touches[0];
+    const nx = (touch.clientX / window.innerWidth) * 2 - 1;
+    const ny = -(touch.clientY / window.innerHeight) * 2 + 1;
+    robotApp.setTargetPointer(nx, ny);
+  }, { passive: true });
 
   // Gentle mobile tilt support (only where browser allows without permission popup)
   if (
