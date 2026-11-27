@@ -116,21 +116,21 @@ function initCustomCursor() {
 const CATEGORY_SPECS = {
   vision: {
     title: 'Local AI — Private Models On Your Machine',
-    desc: 'Run open-weight language models locally without cloud subscriptions or tracking. Includes tools like Ollama and Jan with direct Windows, macOS, and Linux installers.',
+    desc: 'Run open-weight language models and AI image upscalers locally without cloud subscriptions or tracking. Includes Ollama, Jan, and Upscayl.',
     platforms: 'Win / Mac / Linux',
     license: 'Open Source'
   },
   kinetic: {
     title: '3D & Media — Creative Production Suites',
-    desc: 'Build games, record crisp video, and edit studio-grade audio with community-driven tools like Godot Engine, OBS Studio, and Audacity.',
+    desc: 'Build games, record crisp video, trim footage losslessly, and edit audio with Godot Engine, OBS Studio, Audacity, and LosslessCut.',
     platforms: 'Win / Mac / Linux',
     license: 'MIT / GPL'
   },
   pulse: {
-    title: 'Utilities — Fast Cross-Device Workflows',
-    desc: 'Lightweight everyday essentials like LocalSend for encrypted offline file sharing across all your computers and phones.',
+    title: 'Dev & Utilities — Essential Daily Workflows',
+    desc: 'Code, test APIs, share files offline, manage passwords, and connect remotely using VSCodium, Bruno, LocalSend, KeePassXC, and RustDesk.',
     platforms: 'Win / Mac / Linux',
-    license: 'Apache 2.0'
+    license: 'MIT / GPL / Apache'
   }
 };
 
@@ -193,6 +193,17 @@ const TOOLS_CATALOG = {
       linux: 'https://github.com/janhq/jan/releases/latest'
     }
   },
+  upscayl: {
+    name: 'Upscayl',
+    repo: 'upscayl/upscayl',
+    defaultVersion: 'v2.15.0',
+    ext: { windows: '.exe', mac: '.dmg', linux: '.AppImage' },
+    fallbackUrls: {
+      windows: 'https://github.com/upscayl/upscayl/releases/download/v2.15.0/upscayl-2.15.0-win.exe',
+      mac: 'https://github.com/upscayl/upscayl/releases/download/v2.15.0/upscayl-2.15.0-mac.dmg',
+      linux: 'https://github.com/upscayl/upscayl/releases/download/v2.15.0/upscayl-2.15.0-linux.AppImage'
+    }
+  },
   godot: {
     name: 'Godot Engine',
     repo: 'godotengine/godot',
@@ -226,6 +237,39 @@ const TOOLS_CATALOG = {
       linux: 'https://github.com/audacity/audacity/releases/download/Audacity-4.0.2/audacity-linux-4.0.2-x86_64.AppImage'
     }
   },
+  losslesscut: {
+    name: 'LosslessCut',
+    repo: 'mifi/lossless-cut',
+    defaultVersion: '3.70.2',
+    ext: { windows: '.7z', mac: '.dmg', linux: '.AppImage' },
+    fallbackUrls: {
+      windows: 'https://github.com/mifi/lossless-cut/releases/latest',
+      mac: 'https://github.com/mifi/lossless-cut/releases/latest',
+      linux: 'https://github.com/mifi/lossless-cut/releases/latest'
+    }
+  },
+  vscodium: {
+    name: 'VSCodium',
+    repo: 'VSCodium/vscodium',
+    defaultVersion: '1.143.17232',
+    ext: { windows: '.exe', mac: '.dmg', linux: '.AppImage' },
+    fallbackUrls: {
+      windows: 'https://github.com/VSCodium/vscodium/releases/download/1.143.17232/VSCodiumUserSetup-x64-1.143.17232.exe',
+      mac: 'https://github.com/VSCodium/vscodium/releases/latest',
+      linux: 'https://github.com/VSCodium/vscodium/releases/latest'
+    }
+  },
+  bruno: {
+    name: 'Bruno',
+    repo: 'usebruno/bruno',
+    defaultVersion: 'v4.3.0',
+    ext: { windows: '.exe', mac: '.dmg', linux: '.AppImage' },
+    fallbackUrls: {
+      windows: 'https://github.com/usebruno/bruno/releases/latest',
+      mac: 'https://github.com/usebruno/bruno/releases/latest',
+      linux: 'https://github.com/usebruno/bruno/releases/latest'
+    }
+  },
   localsend: {
     name: 'LocalSend',
     repo: 'localsend/localsend',
@@ -235,6 +279,28 @@ const TOOLS_CATALOG = {
       windows: 'https://github.com/localsend/localsend/releases/latest',
       mac: 'https://github.com/localsend/localsend/releases/latest',
       linux: 'https://github.com/localsend/localsend/releases/latest'
+    }
+  },
+  keepassxc: {
+    name: 'KeePassXC',
+    repo: 'keepassxreboot/keepassxc',
+    defaultVersion: '2.8.0',
+    ext: { windows: '.msi', mac: '.dmg', linux: '.AppImage' },
+    fallbackUrls: {
+      windows: 'https://github.com/keepassxreboot/keepassxc/releases/latest',
+      mac: 'https://github.com/keepassxreboot/keepassxc/releases/latest',
+      linux: 'https://github.com/keepassxreboot/keepassxc/releases/latest'
+    }
+  },
+  rustdesk: {
+    name: 'RustDesk',
+    repo: 'rustdesk/rustdesk',
+    defaultVersion: '1.5.3',
+    ext: { windows: '.exe', mac: '.dmg', linux: '.AppImage' },
+    fallbackUrls: {
+      windows: 'https://github.com/rustdesk/rustdesk/releases/download/1.5.3/rustdesk-1.5.3-x86_64.exe',
+      mac: 'https://github.com/rustdesk/rustdesk/releases/latest',
+      linux: 'https://github.com/rustdesk/rustdesk/releases/latest'
     }
   }
 };
@@ -253,21 +319,27 @@ function getOSDisplayName(os) {
   return 'Windows';
 }
 
+function extractExtension(url, fallbackExt) {
+  if (!url || url.endsWith('/latest')) return fallbackExt || '';
+  const match = url.match(/\.(AppImage|exe|msi|dmg|deb|tgz|tar\.gz|tar\.bz2|7z|zip)(?:$|\?)/i);
+  return match ? `.${match[1]}` : (fallbackExt || '');
+}
+
 function pickBestAssetUrl(assets, os) {
   if (!Array.isArray(assets) || !assets.length) return null;
 
   const valid = assets.filter((a) => {
     const n = a.name.toLowerCase();
-    return !/\.(sha256|sha512|sig|asc|blockmap|yml|yaml|txt|zsync)$/i.test(n) && !n.includes('source');
+    return !/\.(sha256|sha512|sig|asc|blockmap|yml|yaml|txt|zsync|digest)$/i.test(n) && !n.includes('source');
   });
 
   if (os === 'windows') {
-    const exe = valid.find((a) => /\.exe$/i.test(a.name) && !/arm64/i.test(a.name));
+    const exe = valid.find((a) => /\.exe$/i.test(a.name) && !/arm64|aarch64/i.test(a.name));
     if (exe) return exe.browser_download_url;
-    const msi = valid.find((a) => /\.msi$/i.test(a.name) && !/arm64/i.test(a.name));
+    const msi = valid.find((a) => /\.msi$/i.test(a.name) && !/arm64|aarch64/i.test(a.name));
     if (msi) return msi.browser_download_url;
     const winZip = valid.find((a) => /win64.*exe\.zip$/i.test(a.name) && !/mono/i.test(a.name))
-      || valid.find((a) => /(win64|windows).*\.zip$/i.test(a.name) && !/arm64|mono/i.test(a.name));
+      || valid.find((a) => /(win64|win32-x64|win-x64|windows).*(\.zip|\.7z)$/i.test(a.name) && !/arm64|aarch64|mono/i.test(a.name));
     if (winZip) return winZip.browser_download_url;
   }
 
@@ -275,7 +347,7 @@ function pickBestAssetUrl(assets, os) {
     const dmg = valid.find((a) => /\.dmg$/i.test(a.name) && /(universal|apple|arm64)/i.test(a.name))
       || valid.find((a) => /\.dmg$/i.test(a.name));
     if (dmg) return dmg.browser_download_url;
-    const macZip = valid.find((a) => /(macos|darwin).*\.zip$/i.test(a.name) && !/mono/i.test(a.name));
+    const macZip = valid.find((a) => /(macos|darwin|mac).*(\.zip|\.tar)/i.test(a.name) && !/mono/i.test(a.name));
     if (macZip) return macZip.browser_download_url;
   }
 
@@ -284,7 +356,7 @@ function pickBestAssetUrl(assets, os) {
     if (appImage) return appImage.browser_download_url;
     const deb = valid.find((a) => /\.deb$/i.test(a.name) && !/arm64|aarch64/i.test(a.name));
     if (deb) return deb.browser_download_url;
-    const linuxArchive = valid.find((a) => /linux.*(amd64|x86_64).*\.(tgz|tar\.gz|zip)$/i.test(a.name) && !/mono/i.test(a.name));
+    const linuxArchive = valid.find((a) => /linux.*(amd64|x86_64|x64).*\.(tgz|tar\.gz|tar\.bz2|zip)$/i.test(a.name) && !/mono/i.test(a.name));
     if (linuxArchive) return linuxArchive.browser_download_url;
   }
 
@@ -292,7 +364,7 @@ function pickBestAssetUrl(assets, os) {
 }
 
 async function fetchLatestRelease(repo) {
-  const cacheKey = `axion_rel_${repo}`;
+  const cacheKey = `axion_rel_v2_${repo}`;
   try {
     const cached = sessionStorage.getItem(cacheKey);
     if (cached) {
@@ -371,6 +443,7 @@ function initMarketplace() {
 
       const live = liveReleases[id];
       const version = live?.tag || meta.defaultVersion;
+      const directUrl = live?.urls?.[selectedOS] || meta.fallbackUrls[selectedOS];
       const versionEl = card.querySelector('.version-badge');
       const osTargetEl = card.querySelector('.tool-os-target');
       const downloadBtn = card.querySelector('.tool-download-btn');
@@ -379,12 +452,11 @@ function initMarketplace() {
       if (osTargetEl) osTargetEl.textContent = `${osName} Installer`;
 
       if (downloadBtn) {
-        const extLabel = meta.ext[selectedOS] || '';
+        const extLabel = extractExtension(directUrl, meta.ext[selectedOS]);
         const btnLabel = downloadBtn.querySelector('.dl-label');
         if (btnLabel) {
           btnLabel.textContent = `Download ${extLabel}`;
         }
-        const directUrl = live?.urls?.[selectedOS] || meta.fallbackUrls[selectedOS];
         downloadBtn.href = directUrl;
       }
     });
@@ -432,7 +504,6 @@ function initMarketplace() {
     });
   }
 
-  // Trigger clean direct file downloads without leaving the marketplace
   cards.forEach((card) => {
     const id = card.dataset.toolId;
     const downloadBtn = card.querySelector('.tool-download-btn');
@@ -457,7 +528,6 @@ function initMarketplace() {
     });
   });
 
-  // Initialize UI immediately with detected OS, then sync live GitHub versions silently
   setActiveOS(detectedOS);
 
   Object.entries(TOOLS_CATALOG).forEach(async ([id, meta]) => {
@@ -499,8 +569,8 @@ const tourSteps = [
   },
   {
     badge: '02 / 03 — CATEGORIES',
-    title: 'AI, 3D & Everyday Utilities.',
-    text: 'Preview software categories here, then open the Marketplace page to filter, search, and download for Windows, macOS, or Linux.',
+    title: 'AI, 3D, Dev & Utilities.',
+    text: 'Preview software categories here, then open the Marketplace page to filter 12+ open-source tools for Windows, macOS, or Linux.',
     skipLabel: 'Skip Tour',
     nextLabel: 'Next →',
     targetId: 'preview',
