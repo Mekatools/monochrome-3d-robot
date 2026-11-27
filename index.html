@@ -57,6 +57,40 @@
     </div>
   </div>
 
+  <!-- Minimalist Greeting & Guided Site Tour HUD -->
+  <aside id="sentinel-guide" class="sentinel-guide" aria-label="Unit 01 Interactive Guide" aria-live="polite">
+    <div class="guide-top">
+      <span class="guide-badge" id="guide-badge">
+        <span class="guide-status-dot" aria-hidden="true"></span>
+        <span id="guide-step-label">UNIT 01 // ONLINE</span>
+      </span>
+      <button type="button" class="guide-close" id="guide-close" aria-label="Dismiss guide" data-cursor="button">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M3 3L11 11M11 3L3 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <h2 class="guide-title" id="guide-title">Hello. I'm Unit 01.</h2>
+    <p class="guide-text" id="guide-text">
+      Welcome to my space. Want a quick 15-second tour of how I'm built and how to interact with me?
+    </p>
+
+    <div class="guide-footer">
+      <div class="guide-dots" id="guide-dots" aria-hidden="true">
+        <span class="guide-dot is-active"></span>
+        <span class="guide-dot"></span>
+        <span class="guide-dot"></span>
+        <span class="guide-dot"></span>
+      </div>
+
+      <div class="guide-actions">
+        <button type="button" class="guide-skip" id="guide-skip" data-cursor="button">Dismiss</button>
+        <button type="button" class="guide-next" id="guide-next" data-cursor="button">Show Me Around</button>
+      </div>
+    </div>
+  </aside>
+
   <!-- Top Navigation -->
   <header class="site-header">
     <div class="container header-inner">
@@ -95,7 +129,8 @@
           </div>
 
           <p class="hero-hint hero-animate" id="hero-hint">
-            Move cursor to guide • Click unit to interact
+            Move cursor to guide • Click or double-click unit •
+            <button type="button" class="hint-replay" id="replay-tour" data-cursor="button">Replay Tour</button>
           </p>
         </div>
 
