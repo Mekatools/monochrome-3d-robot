@@ -93,13 +93,9 @@ function createStudioEnvironment(renderer) {
     envScene.add(mesh);
   };
 
-  // Overhead softbox for crisp ceramic & visor specular streaks
   addLightPanel(10, 4, [0, 6.5, 1.5], [Math.PI / 2, 0, 0], 3.8);
-  // Strong left rim strip
   addLightPanel(4, 9, [-6.5, 1.5, -1.5], [0, Math.PI / 2.2, 0], 3.4);
-  // Soft right fill card
   addLightPanel(5, 7, [6.5, 1, 2.5], [0, -Math.PI / 2.4, 0], 1.3);
-  // Subtle lower bounce strip
   addLightPanel(8, 5, [0, -5.5, 2], [-Math.PI / 2, 0, 0], 0.45);
 
   const renderTarget = pmrem.fromScene(envScene, 0.04);
@@ -511,7 +507,12 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
     isBlinking: false,
     glanceTimer: 4.5,
     glanceOffset: { x: 0, y: 0 },
-    clickEnergy: 0,
+    waveActive: false,
+    waveProgress: 0,
+    currentWaveZ: 0,
+    currentWaveX: 0,
+    jumpActive: false,
+    jumpProgress: 0,
     spinEnergy: 0,
     nodEnergy: 0,
     idleDuration: 0,
@@ -592,6 +593,10 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
   let rafId = 0;
   const lerp = (a, b, t) => a + (b - a) * t;
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+  const smoothstep = (edge0, edge1, x) => {
+    const t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
+    return t * t * (3 - 2 * t);
+  };
 
   const animate = (now) => {
     if (state.disposed) return;
@@ -616,7 +621,7 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
 
     // 2. Standby sleep after 11 seconds of inactivity
     state.idleDuration += dt;
-    const isSleeping = state.idleDuration > 11 && !state.hoveringRobot && !state.curiousButton;
+    const isSleeping = state.idleDuration > 11 && !state.hoveringRobot && !state.curiousButton && !state.waveActive;
     state.standbyBlend = lerp(state.standbyBlend, isSleeping ? 1 : 0, 1 - Math.exp(-3 * dt));
 
     // 3. Random subtle glances when idle (before standby)
@@ -648,16 +653,51 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
     state.smoothBodyPointer.x = lerp(state.smoothBodyPointer.x, goalX, bodyLerp);
     state.smoothBodyPointer.y = lerp(state.smoothBodyPointer.y, goalY, bodyLerp);
 
-    // 4. Reaction Energies (Hover, Curious Tilt, Click Wave, Double-Click Spin, Section Nod)
+    // 4. Polished Smoothstep Wave & Buoyant Hop
+    let targetWaveZ = 0;
+    let targetWaveX = 0;
+    let waveLift = 0;
+
+    if (state.waveActive) {
+      state.waveProgress += dt / 1.75;
+      if (state.waveProgress >= 1) {
+        state.waveActive = false;
+        state.waveProgress = 0;
+      } else if (!reducedMotion) {
+        const p = state.waveProgress;
+        const up = smoothstep(0, 0.24, p);
+        const down = 1 - smoothstep(0.72, 1.0, p);
+        waveLift = up * down;
+
+        // 2 relaxed, fluid side-to-side waves while arm is raised
+        const wavePhase = clamp((p - 0.18) / 0.58, 0, 1);
+        const sway = Math.sin(wavePhase * Math.PI * 4) * 0.24 * waveLift;
+
+        targetWaveZ = 2.02 * waveLift + sway;
+        targetWaveX = -0.34 * waveLift;
+      }
+    }
+
+    const waveBlendSpeed = 1 - Math.exp(-12 * dt);
+    state.currentWaveZ = lerp(state.currentWaveZ, targetWaveZ, waveBlendSpeed);
+    state.currentWaveX = lerp(state.currentWaveX, targetWaveX, waveBlendSpeed);
+
+    let jumpOffset = 0;
+    if (state.jumpActive) {
+      state.jumpProgress += dt / 0.55;
+      if (state.jumpProgress >= 1) {
+        state.jumpActive = false;
+        state.jumpProgress = 0;
+      } else if (!reducedMotion) {
+        jumpOffset = Math.sin(state.jumpProgress * Math.PI) * 0.13;
+      }
+    }
+
+    // 5. Other Reaction Energies (Hover, Curious Tilt, Double-Click Spin, Section Nod)
     state.hoverEnergy = lerp(state.hoverEnergy, state.hoveringRobot ? 1 : 0, 1 - Math.exp(-8 * dt));
     state.curiousEnergy = lerp(state.curiousEnergy, state.curiousButton ? 1 : 0, 1 - Math.exp(-7 * dt));
-    state.clickEnergy = Math.max(0, state.clickEnergy - dt * 1.35);
-    state.spinEnergy = Math.max(0, state.spinEnergy - dt * 0.92);
-    state.nodEnergy = Math.max(0, state.nodEnergy - dt * 1.8);
-
-    const clickBounce = state.clickEnergy > 0
-      ? Math.sin(state.clickEnergy * Math.PI * 2) * 0.16 * state.clickEnergy
-      : 0;
+    state.spinEnergy = Math.max(0, state.spinEnergy - dt * 0.85);
+    state.nodEnergy = Math.max(0, state.nodEnergy - dt * 1.6);
 
     let spinAngle = 0;
     if (state.spinEnergy > 0 && !reducedMotion) {
@@ -670,11 +710,11 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
       ? Math.sin((1 - state.nodEnergy) * Math.PI * 2) * 0.16 * state.nodEnergy
       : 0;
 
-    // 5. Floating & Breathing
+    // 6. Floating & Breathing
     const breathSpeed = 2.2 - state.standbyBlend * 0.7;
     const floatY = Math.sin(elapsed * 1.45) * 0.075 * motionFactor * (1 - state.standbyBlend * 0.45)
       - state.standbyBlend * 0.08
-      + clickBounce;
+      + jumpOffset;
     const breathScale = 1 + Math.sin(elapsed * breathSpeed) * 0.012 * motionFactor;
 
     robotRoot.position.y = floatY;
@@ -684,23 +724,26 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
     bodyPivot.rotation.y = state.smoothBodyPointer.x * 0.2 + spinAngle;
     bodyPivot.rotation.x = -state.smoothBodyPointer.y * 0.08;
 
-    // Head rotation (tracking + curious button tilt + section nod)
+    // Head rotation (tracking + friendly wave tilt + curious button tilt + section nod)
     headPivot.rotation.y = state.smoothHeadPointer.x * 0.46;
     headPivot.rotation.x = -state.smoothHeadPointer.y * 0.3 + Math.sin(elapsed * 0.9) * 0.02 * motionFactor + nodAngle;
-    headPivot.rotation.z = -state.smoothHeadPointer.x * 0.06 + (state.hoverEnergy * 0.05) + (state.curiousEnergy * 0.2);
+    headPivot.rotation.z = -state.smoothHeadPointer.x * 0.06
+      + (state.hoverEnergy * 0.05)
+      + (state.curiousEnergy * 0.2)
+      + (waveLift * 0.09);
 
     // Eyes move inside visor ahead of head
     eyesGroup.position.x = state.smoothEyePointer.x * 0.105;
     eyesGroup.position.y = -0.01 + state.smoothEyePointer.y * 0.055;
 
-    // 6. Blinking & Standby Eyelids
+    // 7. Blinking & Standby Eyelids
     state.blinkTimer -= dt;
     if (state.blinkTimer <= 0 && !state.isBlinking && !isSleeping) {
       state.isBlinking = true;
       state.blinkTimer = 2.6 + Math.random() * 3.8;
     }
 
-    const targetEyeHeight = (1 + state.hoverEnergy * 0.18 + state.clickEnergy * 0.25 + state.curiousEnergy * 0.1)
+    const targetEyeHeight = (1 + state.hoverEnergy * 0.18 + waveLift * 0.16 + state.curiousEnergy * 0.1)
       * (1 - state.standbyBlend * 0.65);
 
     if (state.isBlinking) {
@@ -717,25 +760,22 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
 
     // Glow Intensities
     const standbyDim = 1 - state.standbyBlend * 0.48;
-    const eyeGlow = (0.72 + state.hoverEnergy * 0.22 + state.clickEnergy * 0.28 + state.spinEnergy * 0.3 + Math.sin(elapsed * 2.2) * 0.05) * standbyDim;
+    const eyeGlow = (0.72 + state.hoverEnergy * 0.22 + waveLift * 0.2 + state.spinEnergy * 0.3 + Math.sin(elapsed * 2.2) * 0.05) * standbyDim;
     eyeHaloMaterial.opacity = clamp(eyeGlow, 0.25, 1);
 
-    const coreGlow = (0.42 + Math.sin(elapsed * breathSpeed) * 0.14 + state.hoverEnergy * 0.2 + state.curiousEnergy * 0.22 + state.spinEnergy * 0.35) * standbyDim;
+    const coreGlow = (0.42 + Math.sin(elapsed * breathSpeed) * 0.14 + state.hoverEnergy * 0.2 + state.curiousEnergy * 0.22 + state.spinEnergy * 0.35 + waveLift * 0.15) * standbyDim;
     coreHaloMaterial.opacity = clamp(coreGlow, 0.2, 1);
     coreHalo.scale.setScalar(0.45 + state.spinEnergy * 0.22 + state.curiousEnergy * 0.08);
-    faceGlowLight.intensity = (0.36 + state.hoverEnergy * 0.25 + state.clickEnergy * 0.4 + state.spinEnergy * 0.35) * standbyDim;
+    faceGlowLight.intensity = (0.36 + state.hoverEnergy * 0.25 + waveLift * 0.28 + state.spinEnergy * 0.35) * standbyDim;
 
-    // 7. Floating Arms & Wave Reaction
+    // 8. Floating Arms & Polished Wave
     const armIdleSwing = Math.sin(elapsed * 1.45 + 0.6) * 0.04 * motionFactor;
     leftArm.position.y = 0.12 + armIdleSwing;
     leftArm.rotation.z = -0.04 + state.hoverEnergy * 0.05 - state.spinEnergy * 0.25;
 
-    const waveAngle = state.clickEnergy > 0
-      ? Math.sin(state.clickEnergy * Math.PI * 5) * 0.42 * state.clickEnergy + 0.85 * state.clickEnergy
-      : 0;
     rightArm.position.y = 0.12 - armIdleSwing;
-    rightArm.rotation.z = 0.04 - state.hoverEnergy * 0.05 + waveAngle + state.spinEnergy * 0.25;
-    rightArm.rotation.x = -state.clickEnergy * 0.35;
+    rightArm.rotation.z = 0.04 - state.hoverEnergy * 0.05 + state.currentWaveZ + state.spinEnergy * 0.25;
+    rightArm.rotation.x = state.currentWaveX;
 
     renderer.render(scene, camera);
   };
@@ -770,13 +810,21 @@ export function createRobotScene({ container, onProgress, onReady, reducedMotion
     },
     triggerClickReaction() {
       state.idleDuration = 0;
-      state.clickEnergy = 1;
+      if (!state.waveActive) {
+        state.waveActive = true;
+        state.waveProgress = 0;
+      } else if (state.waveProgress > 0.55) {
+        state.waveProgress = 0.22;
+      }
+      state.jumpActive = true;
+      state.jumpProgress = 0;
       state.isBlinking = true;
     },
     triggerSpinReaction() {
       state.idleDuration = 0;
       state.spinEnergy = 1;
-      state.clickEnergy = Math.max(state.clickEnergy, 0.7);
+      state.jumpActive = true;
+      state.jumpProgress = 0;
       state.isBlinking = true;
     },
     raycastRobot(ndcX, ndcY) {
