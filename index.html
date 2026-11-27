@@ -2,9 +2,225 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Pipeline Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#050505">
+  <title>UNIT 01 — Real-Time Procedural 3D Sentinel</title>
+  <meta name="description" content="A minimalist black-and-white 3D web experience featuring a real-time procedural robot built entirely with Three.js primitives, physically based lighting, and smooth cursor tracking.">
+
+  <!-- Open Graph / Social Sharing -->
+  <meta property="og:title" content="UNIT 01 — Real-Time Procedural 3D Sentinel">
+  <meta property="og:description" content="Sculpted entirely from math, code, and physically based browser lighting.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!-- Inline Monochrome SVG Favicon (Zero extra HTTP request) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23050505'/%3E%3Crect x='14' y='22' width='36' height='20' rx='10' fill='%23ffffff'/%3E%3Crect x='18' y='26' width='28' height='12' rx='6' fill='%23050505'/%3E%3Ccircle cx='26' cy='32' r='2.5' fill='%23ffffff'/%3E%3Ccircle cx='38' cy='32' r='2.5' fill='%23ffffff'/%3E%3C/svg%3E">
+
+  <!-- Google Fonts: Space Grotesk (Display), Inter (Body), JetBrains Mono (Technical Labels) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
 </head>
-<body style="background:#050505; color:#ffffff; font-family:sans-serif; display:grid; place-items:center; height:100vh; margin:0;">
-  <h1>Cloudflare Pages + GitHub Connected</h1>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Subtle cinematic film grain -->
+  <div class="grain-overlay" aria-hidden="true"></div>
+
+  <!-- Custom cursor (activated smoothly by JavaScript on desktop) -->
+  <div class="cursor-dot" id="cursor-dot" aria-hidden="true"></div>
+  <div class="cursor-ring" id="cursor-ring" aria-hidden="true"></div>
+
+  <!-- Fixed 3D Viewport Stage -->
+  <div class="robot-stage" id="robot-stage">
+    <div id="canvas-container" class="canvas-container" aria-label="Interactive 3D Robot"></div>
+
+    <!-- Thin white loading line shown lazily while 3D engine initializes -->
+    <div id="robot-loader" class="robot-loader" role="status" aria-live="polite">
+      <div class="loader-track">
+        <div class="loader-bar" id="loader-bar"></div>
+      </div>
+      <span class="loader-label">INITIALIZING 3D ENGINE</span>
+    </div>
+
+    <!-- Fallback shown only if WebGL is unsupported -->
+    <div id="webgl-fallback" class="webgl-fallback" hidden>
+      <div class="fallback-emblem" aria-hidden="true">
+        <div class="fallback-visor">
+          <span></span><span></span>
+        </div>
+      </div>
+      <p class="fallback-title">Hardware 3D Unavailable</p>
+      <p class="fallback-desc">Your browser or device does not support WebGL rendering.</p>
+    </div>
+  </div>
+
+  <!-- Top Navigation -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="#hero" class="brand" data-cursor="link">
+        <span class="brand-dot" aria-hidden="true"></span>
+        <span>UNIT // 01</span>
+      </a>
+
+      <nav class="site-nav" aria-label="Primary navigation">
+        <a href="#about" class="nav-link" data-cursor="link">Concept</a>
+        <a href="#architecture" class="nav-link" data-cursor="link">Architecture</a>
+        <a href="#specs" class="nav-link" data-cursor="link">Specs</a>
+        <a href="#contact" class="nav-link" data-cursor="link">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <!-- HERO SECTION -->
+    <section id="hero" class="section hero-section" data-section="hero">
+      <div class="container hero-grid">
+        <div class="hero-content">
+          <p class="eyebrow hero-animate">REAL-TIME PROCEDURAL 3D • WEBGL</p>
+          <h1 class="hero-title hero-animate">FORM BUILT<br>FROM LIGHT.</h1>
+          <p class="hero-subtitle hero-animate">
+            An autonomous 3D sentinel sculpted entirely from mathematical primitives, physically based reflections, and real-time browser physics.
+          </p>
+
+          <div class="hero-actions hero-animate">
+            <a href="#about" class="btn-primary" id="hero-cta" data-cursor="button">
+              <span>Explore Architecture</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M8 3V13M8 13L12.5 8.5M8 13L3.5 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+          </div>
+
+          <p class="hero-hint hero-animate" id="hero-hint">
+            Move cursor to guide • Click unit to interact
+          </p>
+        </div>
+
+        <!-- Reserves clean stage room for the 3D robot -->
+        <div class="hero-stage-spacer" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <!-- ABOUT / CONCEPT SECTION -->
+    <section id="about" class="section content-section" data-section="about">
+      <div class="container">
+        <div class="editorial-card reveal">
+          <p class="eyebrow">01 / CONCEPT</p>
+          <h2 class="section-title">Zero external models.<br>Zero heavy textures.</h2>
+          <div class="editorial-columns">
+            <p class="body-text">
+              Most 3D websites download massive pre-made model files that slow down the browser. UNIT 01 takes a purer engineering path: every ceramic curve, glass visor, joint ring, and metallic surface is generated mathematically in code the moment you arrive.
+            </p>
+            <p class="body-text">
+              Lit by a custom-synthesized studio environment and driven by layered spring physics, the sentinel responds naturally to your presence while keeping the entire page ultra-lightweight.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ARCHITECTURE SECTION -->
+    <section id="architecture" class="section content-section" data-section="architecture">
+      <div class="container">
+        <div class="section-header reveal">
+          <p class="eyebrow">02 / ARCHITECTURE</p>
+          <h2 class="section-title">Engineered for precision.</h2>
+        </div>
+
+        <div class="arch-grid">
+          <article class="arch-card reveal">
+            <span class="card-index">01</span>
+            <h3 class="card-title">Procedural Geometry</h3>
+            <p class="card-text">
+              Constructed purely from Three.js primitives—rounded shells, torus joints, and optical lenses—resulting in crisp edges at any resolution.
+            </p>
+          </article>
+
+          <article class="arch-card reveal">
+            <span class="card-index">02</span>
+            <h3 class="card-title">Physically Based Light</h3>
+            <p class="card-text">
+              A generated monochrome studio environment map creates authentic clearcoat reflections across matte titanium and glossy white ceramic.
+            </p>
+          </article>
+
+          <article class="arch-card reveal">
+            <span class="card-index">03</span>
+            <h3 class="card-title">Kinetic Tracking</h3>
+            <p class="card-text">
+              Multi-stage interpolation allows eyes, head, and torso to follow your cursor at different speeds with organic breathing and blinking.
+            </p>
+          </article>
+
+          <article class="arch-card reveal">
+            <span class="card-index">04</span>
+            <h3 class="card-title">Zero-Overhead Engine</h3>
+            <p class="card-text">
+              Adaptive pixel scaling, shared GPU geometries, and automatic render pausing when idle keep frame rates smooth on every device.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- SPECS SECTION -->
+    <section id="specs" class="section content-section" data-section="specs">
+      <div class="container">
+        <div class="specs-panel reveal">
+          <div class="specs-header">
+            <p class="eyebrow">03 / TELEMETRY</p>
+            <h2 class="section-title">Performance by design.</h2>
+          </div>
+
+          <div class="specs-grid">
+            <div class="spec-item">
+              <span class="spec-value">60 FPS</span>
+              <span class="spec-label">Target Frame Rate</span>
+            </div>
+            <div class="spec-item">
+              <span class="spec-value">0 KB</span>
+              <span class="spec-label">External 3D Files</span>
+            </div>
+            <div class="spec-item">
+              <span class="spec-value">PBR</span>
+              <span class="spec-label">Clearcoat Shaders</span>
+            </div>
+            <div class="spec-item">
+              <span class="spec-value">100%</span>
+              <span class="spec-label">Native ES Modules</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT / FOOTER SECTION -->
+    <section id="contact" class="section contact-section" data-section="contact">
+      <div class="container">
+        <div class="contact-card reveal">
+          <p class="eyebrow">04 / DIALOGUE</p>
+          <h2 class="contact-title">Built to prove code is a visual medium.</h2>
+          <p class="body-text contact-desc">
+            Designed and engineered with Three.js, modern CSS, and zero build dependencies.
+          </p>
+          <div class="contact-actions">
+            <a href="#hero" class="btn-primary" id="back-to-top" data-cursor="button">
+              <span>Return to Sentinel</span>
+            </a>
+          </div>
+        </div>
+
+        <footer class="site-footer">
+          <span>UNIT 01 — MONOCHROME 3D SHOWCASE</span>
+          <span>PURE BLACK &amp; WHITE • REAL-TIME WEBGL</span>
+        </footer>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>
