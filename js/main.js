@@ -1,7 +1,7 @@
 /**
  * UNIT 01 — Application Controller
  * Handles lazy 3D engine initialization, custom cursor, pointer/tilt tracking,
- * shadow-entrance greeting, guided site tour, scroll choreography, and pause states.
+ * first-visit guided tour, scroll choreography, and performance pause states.
  */
 
 const rootEl = document.documentElement;
@@ -30,9 +30,27 @@ const guideNextBtn = document.getElementById('guide-next');
 const guideCloseBtn = document.getElementById('guide-close');
 const replayTourBtn = document.getElementById('replay-tour');
 
+const TOUR_STORAGE_KEY = 'unit01_guide_seen';
+
 let robotApp = null;
 let isHoveringRobot = false;
 let lastTapTime = 0;
+
+function hasSeenGuide() {
+  try {
+    return window.localStorage.getItem(TOUR_STORAGE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function markGuideSeen() {
+  try {
+    window.localStorage.setItem(TOUR_STORAGE_KEY, '1');
+  } catch {
+    // Ignore storage errors in restricted/private browser contexts
+  }
+}
 
 // =========================================================
 // 1. CUSTOM SMOOTH CURSOR (Desktop Fine Pointer Only)
@@ -95,7 +113,7 @@ function initCustomCursor() {
 }
 
 // =========================================================
-// 2. GUIDED SITE TOUR & WELCOME GREETING
+// 2. FIRST-VISIT GREETING & REPLAYABLE GUIDED TOUR
 // =========================================================
 const tourSteps = [
   {
@@ -198,6 +216,7 @@ function closeGuide(returnToHero = false) {
   if (!guideEl) return;
   clearAutoAdvance();
   isTourPlaying = false;
+  markGuideSeen();
   guideEl.classList.remove('is-open');
 
   if (returnToHero) {
@@ -217,10 +236,11 @@ function closeGuide(returnToHero = false) {
 
 function advanceTourStep() {
   clearAutoAdvance();
+  markGuideSeen();
+
   if (tourIndex < tourSteps.length - 1) {
     isTourPlaying = true;
     renderTourStep(tourIndex + 1);
-    // Gently auto-advance through the tour unless the user cancels or scrolls manually
     autoAdvanceTimer = setTimeout(() => {
       if (isTourPlaying && guideEl && guideEl.classList.contains('is-open')) {
         advanceTourStep();
@@ -261,7 +281,6 @@ function initGuideControls() {
     });
   }
 
-  // Stop automatic scrolling immediately if user scrolls with mouse wheel or presses Escape
   window.addEventListener('wheel', () => {
     if (isTourPlaying) {
       clearAutoAdvance();
@@ -475,7 +494,9 @@ async function loadRobotEngine() {
         }, 180);
       },
       onGreet: () => {
-        openGuide(0);
+        if (!hasSeenGuide()) {
+          openGuide(0);
+        }
       }
     });
   } catch (error) {
