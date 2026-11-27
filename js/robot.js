@@ -107,7 +107,7 @@ function createStudioEnvironment(renderer) {
 }
 
 /**
- * Builds the procedural 3D robot, studio lighting, shadow entrance, and animation loop.
+ * Builds the procedural 3D robot, studio lighting, shadow entrance, and AXION model modes.
  */
 export function createRobotScene({ container, onProgress, onReady, onGreet, reducedMotion = false }) {
   if (onProgress) onProgress(20);
@@ -482,11 +482,12 @@ export function createRobotScene({ container, onProgress, onReady, onGreet, redu
   if (onProgress) onProgress(90);
 
   // =========================================================
-  // RESPONSIVE FRAMING & REACTION STATES
+  // RESPONSIVE FRAMING, MODEL MODES & REACTION STATES
   // =========================================================
   const state = {
     paused: false,
     disposed: false,
+    modelMode: 'vision', // 'vision' | 'kinetic' | 'pulse'
     entranceProgress: reducedMotion ? 1 : 0,
     entranceGreeted: reducedMotion,
     targetPointer: { x: 0, y: 0 },
@@ -624,7 +625,10 @@ export function createRobotScene({ container, onProgress, onReady, onGreet, redu
     const elapsed = now * 0.001;
     const motionFactor = reducedMotion ? 0.15 : 1;
 
-    // 0. Shadow-to-Light Entrance Choreography
+    const isKinetic = state.modelMode === 'kinetic';
+    const isPulse = state.modelMode === 'pulse';
+
+    // 0. Shadow-to-Light Entrance
     if (state.entranceProgress < 1) {
       state.entranceProgress = Math.min(1, state.entranceProgress + dt / 1.75);
       const e = smoothstep(0, 1, state.entranceProgress);
@@ -661,7 +665,7 @@ export function createRobotScene({ container, onProgress, onReady, onGreet, redu
     const isSleeping = state.idleDuration > 11 && !state.hoveringRobot && !state.curiousButton && !state.waveActive;
     state.standbyBlend = lerp(state.standbyBlend, isSleeping ? 1 : 0, 1 - Math.exp(-3 * dt));
 
-    // 3. Random subtle glances when idle
+    // 3. Random subtle glances when idle (Vision mode does gentle optical sweep)
     state.glanceTimer -= dt;
     if (state.glanceTimer <= 0) {
       state.glanceTimer = 3.2 + Math.random() * 4.0;
@@ -676,12 +680,14 @@ export function createRobotScene({ container, onProgress, onReady, onGreet, redu
     }
 
     const activeTrack = 1 - state.standbyBlend * 0.85;
-    const goalX = clamp((state.targetPointer.x + state.glanceOffset.x) * activeTrack, -1, 1);
+    const visionSweep = state.modelMode === 'vision' && !reducedMotion ? Math.sin(elapsed * 0.9) * 0.08 : 0;
+    const goalX = clamp((state.targetPointer.x + state.glanceOffset.x + visionSweep) * activeTrack, -1, 1);
     const goalY = clamp((state.targetPointer.y + state.glanceOffset.y) * activeTrack - state.standbyBlend * 0.35, -1, 1);
 
-    const eyeLerp = 1 - Math.exp(-14 * dt);
-    const headLerp = 1 - Math.exp(-7.5 * dt);
-    const bodyLerp = 1 - Math.exp(-4.2 * dt);
+    const speedBoost = isKinetic ? 1.45 : 1;
+    const eyeLerp = 1 - Math.exp(-14 * speedBoost * dt);
+    const headLerp = 1 - Math.exp(-7.5 * speedBoost * dt);
+    const bodyLerp = 1 - Math.exp(-4.2 * speedBoost * dt);
 
     state.smoothEyePointer.x = lerp(state.smoothEyePointer.x, goalX, eyeLerp);
     state.smoothEyePointer.y = lerp(state.smoothEyePointer.y, goalY, eyeLerp);
@@ -746,37 +752,43 @@ export function createRobotScene({ container, onProgress, onReady, onGreet, redu
       ? Math.sin((1 - state.nodEnergy) * Math.PI * 2) * 0.16 * state.nodEnergy
       : 0;
 
-    // 6. Floating & Breathing
-    const breathSpeed = 2.2 - state.standbyBlend * 0.7;
-    const floatY = Math.sin(elapsed * 1.45) * 0.075 * motionFactor * (1 - state.standbyBlend * 0.45)
+    // 6. Floating & Breathing (adapted per AXION model mode)
+    const floatSpeed = isKinetic ? 2.15 : isPulse ? 1.15 : 1.45;
+    const floatAmp = isKinetic ? 0.1 : 0.075;
+    const breathSpeed = (isPulse ? 3.2 : 2.2) - state.standbyBlend * 0.7;
+
+    const floatY = Math.sin(elapsed * floatSpeed) * floatAmp * motionFactor * (1 - state.standbyBlend * 0.45)
       - state.standbyBlend * 0.08
       + jumpOffset;
-    const breathScale = 1 + Math.sin(elapsed * breathSpeed) * 0.012 * motionFactor;
+    const breathScale = 1 + Math.sin(elapsed * breathSpeed) * (isPulse ? 0.022 : 0.012) * motionFactor;
 
     robotRoot.position.y = floatY;
     torsoGroup.scale.set(breathScale, 1, breathScale);
 
-    bodyPivot.rotation.y = state.smoothBodyPointer.x * 0.2 + spinAngle;
-    bodyPivot.rotation.x = -state.smoothBodyPointer.y * 0.08;
+    const bodyTiltAmt = isKinetic ? 0.28 : 0.2;
+    bodyPivot.rotation.y = state.smoothBodyPointer.x * bodyTiltAmt + spinAngle;
+    bodyPivot.rotation.x = -state.smoothBodyPointer.y * (isKinetic ? 0.12 : 0.08);
 
-    headPivot.rotation.y = state.smoothHeadPointer.x * 0.46;
+    headPivot.rotation.y = state.smoothHeadPointer.x * (isKinetic ? 0.54 : 0.46);
     headPivot.rotation.x = -state.smoothHeadPointer.y * 0.3 + Math.sin(elapsed * 0.9) * 0.02 * motionFactor + nodAngle;
     headPivot.rotation.z = -state.smoothHeadPointer.x * 0.06
       + (state.hoverEnergy * 0.05)
       + (state.curiousEnergy * 0.2)
-      + (waveLift * 0.09);
+      + (waveLift * 0.09)
+      + (isPulse ? Math.sin(elapsed * 1.4) * 0.04 * motionFactor : 0);
 
     eyesGroup.position.x = state.smoothEyePointer.x * 0.105;
     eyesGroup.position.y = -0.01 + state.smoothEyePointer.y * 0.055;
 
-    // 7. Blinking & Standby Eyelids
+    // 7. Blinking & Mode Eye Shape
     state.blinkTimer -= dt;
     if (state.blinkTimer <= 0 && !state.isBlinking && !isSleeping) {
       state.isBlinking = true;
       state.blinkTimer = 2.6 + Math.random() * 3.8;
     }
 
-    const targetEyeHeight = (1 + state.hoverEnergy * 0.18 + waveLift * 0.16 + state.curiousEnergy * 0.1)
+    const modeEyeBias = isKinetic ? 1.12 : isPulse ? 0.96 : 0.92;
+    const targetEyeHeight = (modeEyeBias + state.hoverEnergy * 0.18 + waveLift * 0.16 + state.curiousEnergy * 0.1)
       * (1 - state.standbyBlend * 0.65);
 
     if (state.isBlinking) {
@@ -791,22 +803,26 @@ export function createRobotScene({ container, onProgress, onReady, onGreet, redu
     leftEye.scale.y = state.blinkValue;
     rightEye.scale.y = state.blinkValue;
 
+    // 8. Glow Intensities (Pulse mode boosts harmonic chest reactor!)
     const standbyDim = 1 - state.standbyBlend * 0.48;
+    const pulseWave = isPulse ? (0.5 + 0.5 * Math.sin(elapsed * 3.6)) * 0.38 : 0;
+
     const eyeGlow = (0.72 + state.hoverEnergy * 0.22 + waveLift * 0.2 + state.spinEnergy * 0.3 + Math.sin(elapsed * 2.2) * 0.05) * standbyDim;
     eyeHaloMaterial.opacity = clamp(eyeGlow, 0.25, 1);
 
-    const coreGlow = (0.42 + Math.sin(elapsed * breathSpeed) * 0.14 + state.hoverEnergy * 0.2 + state.curiousEnergy * 0.22 + state.spinEnergy * 0.35 + waveLift * 0.15) * standbyDim;
+    const coreGlow = (0.42 + pulseWave + Math.sin(elapsed * breathSpeed) * 0.14 + state.hoverEnergy * 0.2 + state.curiousEnergy * 0.22 + state.spinEnergy * 0.35 + waveLift * 0.15) * standbyDim;
     coreHaloMaterial.opacity = clamp(coreGlow, 0.2, 1);
-    coreHalo.scale.setScalar(0.45 + state.spinEnergy * 0.22 + state.curiousEnergy * 0.08);
-    faceGlowLight.intensity = (0.36 + state.hoverEnergy * 0.25 + waveLift * 0.28 + state.spinEnergy * 0.35) * standbyDim;
+    coreHalo.scale.setScalar(0.45 + pulseWave * 0.48 + state.spinEnergy * 0.22 + state.curiousEnergy * 0.08);
+    faceGlowLight.intensity = (0.36 + pulseWave * 0.3 + state.hoverEnergy * 0.25 + waveLift * 0.28 + state.spinEnergy * 0.35) * standbyDim;
 
-    // 8. Floating Arms
-    const armIdleSwing = Math.sin(elapsed * 1.45 + 0.6) * 0.04 * motionFactor;
+    // 9. Floating Arms
+    const armIdleSwing = Math.sin(elapsed * floatSpeed + 0.6) * (isKinetic ? 0.065 : 0.04) * motionFactor;
+    const kineticPose = isKinetic ? 0.08 : 0;
     leftArm.position.y = 0.12 + armIdleSwing;
-    leftArm.rotation.z = -0.04 + state.hoverEnergy * 0.05 - state.spinEnergy * 0.25;
+    leftArm.rotation.z = -0.04 - kineticPose + state.hoverEnergy * 0.05 - state.spinEnergy * 0.25;
 
     rightArm.position.y = 0.12 - armIdleSwing;
-    rightArm.rotation.z = 0.04 - state.hoverEnergy * 0.05 + state.currentWaveZ + state.spinEnergy * 0.25;
+    rightArm.rotation.z = 0.04 + kineticPose - state.hoverEnergy * 0.05 + state.currentWaveZ + state.spinEnergy * 0.25;
     rightArm.rotation.x = state.currentWaveX;
 
     renderer.render(scene, camera);
@@ -818,6 +834,14 @@ export function createRobotScene({ container, onProgress, onReady, onGreet, redu
   rafId = requestAnimationFrame(animate);
 
   return {
+    setModelMode(mode) {
+      if (mode === 'vision' || mode === 'kinetic' || mode === 'pulse') {
+        state.modelMode = mode;
+        state.idleDuration = 0;
+        state.nodEnergy = 0.9;
+        state.isBlinking = true;
+      }
+    },
     setTargetPointer(nx, ny) {
       const wasSleeping = state.idleDuration > 11;
       state.idleDuration = 0;
